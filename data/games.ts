@@ -2134,6 +2134,17 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
+  {
+    id: 180,
+    title: "FNF-Sans/Undertale",
+    slug: "FNF-Sans",
+    description: "Have fun run is not the real run",
+    image: "/images/games/bad-piggies.jpg",
+    categories: ["Arcade", "Action"],
+    playUrl: "https://fnf-sans-things.vercel.app/",
+    controls: "IDC ",
+    isWorking: true,
+  },
 ]
 
 // Apps data
