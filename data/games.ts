@@ -2156,6 +2156,17 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
+   {
+    id: 182,
+    title: "FNF-qt more keys",
+    slug: "FNFqtmorekeys",
+    description: "WHAAAAAA",
+    image: "/images/games/bad-piggies.jpg",
+    categories: ["Arcade", "Action"],
+    playUrl: "https://attgh.vercel.app/",
+    controls: "IDC ",
+    isWorking: true,
+  },
 ]
 
 // Apps data
