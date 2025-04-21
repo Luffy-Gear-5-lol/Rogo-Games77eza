@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Frame</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+    
+    #game-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(to right, #9333ea, #d946ef);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    p {
+      margin-bottom: 2rem;
+      max-width: 600px;
+      line-height: 1.6;
+    }
+    
+    .game-controls {
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 2rem;
+    }
+    
+    .start-button {
+      background: linear-gradient(to right, #9333ea, #d946ef);
+      border: none;
+      color: white;
+      padding: 12px 24px;
+      font-size: 1rem;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .start-button:hover {
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <h1 id="game-title">Game Title</h1>
+    <p id="game-description">Game description will appear here.</p>
+    
+    <button class="start-button" onclick="startGame()">Start Game</button>
+    
+    <div class="game-controls">
+      <p id="game-controls">Game controls will appear here.</p>
+    </div>
+  </div>
+
+  <script>
+    // Get game information from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const gameTitle = urlParams.get('title') || 'Game Title';
+    const gameDescription = urlParams.get('description') || 'Game description will appear here.';
+    const gameControls = urlParams.get('controls') || 'Game controls will appear here.';
+    
+    // Update the page with game information
+    document.getElementById('game-title').textContent = gameTitle;
+    document.getElementById('game-description').textContent = gameDescription;
+    document.getElementById('game-controls').textContent = gameControls;
+    
+    // Function to start the game
+    function startGame() {
+      const gameContainer = document.getElementById('game-container');
+      gameContainer.innerHTML = '<h1>' + gameTitle + '</h1><div id="game-canvas" style="width: 800px; height: 600px; background-color: #111; position: relative;"></div>';
+      
+      // Initialize a simple game
+      initSimpleGame();
+    }
+    
+    // Simple game initialization
+    function initSimpleGame() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 800;
+      canvas.height = 600;
+      document.getElementById('game-canvas').appendChild(canvas);
+      
+      const ctx = canvas.getContext('2d');
+      
+      // Game variables
+      const player = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        size: 20,
+        speed: 5,
+        color: '#9333ea'
+      };
+      
+      const obstacles = [];
+      let score = 0;
+      let gameStarted = true;
+      
+      // Create random obstacles
+      function createObstacle() {
+        const size = Math.random() * 30 + 10;
+        const x = Math.random() * (canvas.width - size);
+        const y = -size;
+        const speed = Math.random() * 3 + 1;
+        
+        obstacles.push({ x, y, size, speed });
+      }
+      
+      // Game loop
+      function update() {
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw player
+        ctx.fillStyle = player.color;
+        ctx.fillRect(player.x - player.size/2, player.y - player.size/2, player.size, player.size);
+        
+        // Update and draw obstacles
+        for (let i = 0; i < obstacles.length; i++) {
+          const obstacle = obstacles[i];
+          obstacle.y += obstacle.speed;
+          
+          ctx.fillStyle = '#ff4d4d';
+          ctx.fillRect(obstacle.x, obstacle.y, obstacle.size, obstacle.size);
+          
+          // Check collision
+          if (
+            player.x + player.size/2 > obstacle.x && 
+            player.x - player.size/2 < obstacle.x + obstacle.size &&
+            player.y + player.size/2 > obstacle.y && 
+            player.y - player.size/2 < obstacle.y + obstacle.size
+          ) {
+            endGame();
+            return;
+          }
+          
+          // Remove obstacles that are off screen
+          if (obstacle.y > canvas.height) {
+            obstacles.splice(i, 1);
+            i--;
+            score++;
+          }
+        }
+        
+        // Add new obstacles
+        if (Math.random() < 0.02) {
+          createObstacle();
+        }
+        
+        // Draw score
+        ctx.fillStyle = 'white';
+        ctx.font = '20px Arial';
+        ctx.fillText(`Score: ${score}`, 20, 30);
+        
+        // Continue the game loop
+        if (gameStarted) {
+          requestAnimationFrame(update);
+        }
+      }
+      
+      // Handle keyboard input
+      const keys = {};
+      
+      window.addEventListener('keydown', (e) => {
+        keys[e.key] = true;
+      });
+      
+      window.addEventListener('keyup', (e) => {
+        keys[e.key] = false;
+      });
+      
+      function handleInput() {
+        if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
+          player.x = Math.max(player.size/2, player.x - player.speed);
+        }
+        if (keys['ArrowRight'] || keys['d'] || keys['D']) {
+          player.x = Math.min(canvas.width - player.size/2, player.x + player.speed);
+        }
+        if (keys['ArrowUp'] || keys['w'] || keys['W']) {
+          player.y = Math.max(player.size/2, player.y - player.speed);
+        }
+        if (keys['ArrowDown'] || keys['s'] || keys['S']) {
+          player.y = Math.min(canvas.height - player.size/2, player.y + player.speed);
+        }
+        
+        // Continue handling input
+        if (gameStarted) {
+          requestAnimationFrame(handleInput);
+        }
+      }
+      
+      // End game
+      function endGame() {
+        gameStarted = false;
+        
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = 'white';
+        ctx.font = '30px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Game Over! Score: ${score}`, canvas.width/2, canvas.height/2);
+        ctx.font = '20px Arial';
+        ctx.fillText('Click to restart', canvas.width/2, canvas.height/2 + 40);
+        
+        canvas.addEventListener('click', startGame);
+      }
+      
+      // Start the game loops
+      update();
+      handleInput();
+    }
+  </script>
+</body>
+</html>

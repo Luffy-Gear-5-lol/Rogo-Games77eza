@@ -1,0 +1,52 @@
+{
+  "polls": [
+    {
+      "id": "1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p",
+      "question": "What's your favorite game category on our site?",
+      "options": [
+        {
+          "id": "opt1",
+          "text": "Action",
+          "votes": 0
+        },
+        {
+          "id": "opt2",
+          "text": "Adventure",
+          "votes": 0
+        },
+        {
+          "id": "opt3",
+          "text": "Arcade",
+          "votes": 0
+        },
+        {
+          "id": "opt4",
+          "text": "Puzzle",
+          "votes": 0
+        },
+        {
+          "id": "opt5",
+          "text": "Racing",
+          "votes": 0
+        },
+        {
+          "id": "opt6",
+          "text": "Sports",
+          "votes": 0
+        },
+        {
+          "id": "opt7",
+          "text": "Strategy",
+          "votes": 0
+        },
+        {
+          "id": "opt8",
+          "text": "Simulation",
+          "votes": 0
+        }
+      ],
+      "createdAt": "2023-06-01T00:00:00.000Z",
+      "expiresAt": "2023-06-05T06:30:00.000Z"
+    }
+  ]
+}
