@@ -2167,6 +2167,17 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
+  {
+    id: 183,
+    title: "FNF-Matt 3.0",
+    slug: "FNFMat",
+    description: "WHAAAAAA",
+    image: "/images/games/bad-piggies.jpg",
+    categories: ["Arcade", "Action"],
+    playUrl: "https://fnf-wiik-3.vercel.app/",
+    controls: "IDC ",
+    isWorking: true,
+  },
 ]
 
 // Apps data
