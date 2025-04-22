@@ -2178,6 +2178,17 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
+  {
+    id: 184,
+    title: "fnf marios madness",
+    slug: "FNFmariosmadness",
+    description: "WHAAAAAA",
+    image: "/images/games/bad-piggies.jpg",
+    categories: ["Arcade", "Action"],
+    playUrl: "https://mnejkbhgfda.vercel.app/",
+    controls: "IDC ",
+    isWorking: true,
+  },
 ]
 
 // Apps data
