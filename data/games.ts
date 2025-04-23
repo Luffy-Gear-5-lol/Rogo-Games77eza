@@ -159,7 +159,7 @@ export const games: Game[] = [
     image: "/images/games/drift-hunters.jpg",
     categories: ["Racing", "Driving", "Simulation"],
     playUrl:
-      "https://script.google.com/a/macros/fwcsstudents.org/s/AKfycbw8iHPqdVFEzquUYbNxFVAu1Tw4Nri5SWMRLdP_c7a84vCOHVG7YUWuhjSVptg1SVHr/exec",
+      "https://seraph-eight-omega.vercel.app/games/drifthunters/index.html",
     controls: "Arrow keys to drive, Space for handbrake, Shift to change gears.",
     isWorking: true,
   },
