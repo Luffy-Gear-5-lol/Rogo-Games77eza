@@ -2189,6 +2189,17 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
+   {
+    id: 185,
+    title: "fnf slenderman",
+    slug: "FNFslenderman",
+    description: "WHAAAAAA",
+    image: "/images/games/bad-piggies.jpg",
+    categories: ["Arcade", "Action"],
+    playUrl: "https://fnfslenderman.vercel.app/",
+    controls: "IDC ",
+    isWorking: true,
+  },
 ]
 
 // Apps data
