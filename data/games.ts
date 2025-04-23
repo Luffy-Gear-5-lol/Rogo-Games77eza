@@ -2053,7 +2053,7 @@ export const games: Game[] = [
     description: "do it later",
     image: "/images/games/bad-piggies.jpg",
     categories: ["Arcade", "Action"],
-    playUrl: "https://hjgfchj.vercel.app/",
+    playUrl: "https://jhjkg.vercel.app/",
     controls: "IDC ",
     isWorking: true,
   },
