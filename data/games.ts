@@ -555,7 +555,7 @@ export const games: Game[] = [
       "A rhythm game where you play as Boyfriend trying to impress his girlfriend's father through rap battles. Press arrow keys in time with the music to win each musical showdown.",
     image: "/images/games/fnf.jpg",
     categories: ["Rhythm", "Music", "Story"],
-    playUrl: "https://pratheekkh.netlify.app/games/fnf/",
+    playUrl: "https://seraph-eight-omega.vercel.app/games/fnf/index.html",
     controls: "Arrow keys to hit notes in time with the music. Press when the arrows align.",
     isWorking: true,
   },
@@ -2344,7 +2344,7 @@ export const games: Game[] = [
     isWorking: true,
   },
   {
-    id: 198,
+    id: 199,
     title: "fnf-vs-Nonsense",
     slug: "fnf-Nonsense-mod",
     description: "might take a while to load",
