@@ -2354,6 +2354,28 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
+   {
+    id: 200,
+    title: "fnf-vs-Garcello(DFJK-controls+arrow keys)",
+    slug: "fnf-Garcello-mod",
+    description: "W mod plus its easy",
+    image: "/images/games/bad-piggies.jpg",
+    categories: ["Proxy"],
+    playUrl: "https://hjjhjkj.vercel.app/",
+    controls: "IDC ",
+    isWorking: true,
+  },
+  {
+    id: 201,
+    title: "fnf-vs-midfightmasses",
+    slug: "fnf-midfightmasses-mod",
+    description: "have fun",
+    image: "/images/games/bad-piggies.jpg",
+    categories: ["beat"],
+    playUrl: "https://seraph-eight-omega.vercel.app/games/fnfmidfight/index.html",
+    controls: "IDC ",
+    isWorking: true,
+  },
 ]
 
 // Apps data
