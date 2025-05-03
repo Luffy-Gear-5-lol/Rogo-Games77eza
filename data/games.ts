@@ -2695,7 +2695,17 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-  
+   {
+    id: 231,
+    title: "Matt v3(offical)",
+    slug: "matt v3",
+    description: "have fun",
+    image: "/images/games/bad-piggies.jpg",
+    categories: ["beat"],
+    playUrl: "https://astroidv33434.vercel.app/service/hvtrs8%2F-w%3A.qnmkkdm.aoo%2Feaoeq%2Fjtol7%2Fdrkdcy%2Fnkgjt%2Ffwniil%2FoavtT30%2Fknfez.jtol",
+    controls: "IDC ",
+    isWorking: true,
+  },
 ]
 
 // Apps data
