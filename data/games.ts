@@ -2702,7 +2702,7 @@ export const games: Game[] = [
     description: "have fun",
     image: "/images/games/bad-piggies.jpg",
     categories: ["beat"],
-    playUrl: "https://astroidv33434.vercel.app/service/hvtrs8%2F-w%3A.qnmkkdm.aoo%2Feaoeq%2Fjtol7%2Fdrkdcy%2Fnkgjt%2Ffwniil%2FoavtT30%2Fknfez.jtol",
+    playUrl: "https://6333345.vercel.app/classes/math/hvtrs8%2F-w%3A.qnmkkdm.aoo%2Feaoeq%2Fjtol7%2Fdrkdcy%2Fnkgjt%2Ffwniil%2Fst00-ildgx%2Chvmn",
     controls: "IDC ",
     isWorking: true,
   },
