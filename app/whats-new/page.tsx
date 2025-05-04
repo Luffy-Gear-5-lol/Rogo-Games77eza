@@ -1,21 +1,69 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
+import Link from "next/link"
+import { ArrowLeft } from "lucide-react"
 
 export default function WhatsNewPage() {
   return (
     <div className="container mx-auto py-8 px-4">
+      <Link href="/" className="inline-flex items-center mb-8 text-gray-400 hover:text-white">
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back to Home
+      </Link>
+
       <h1 className="text-4xl font-bold mb-6">What's New</h1>
       <p className="text-lg mb-8">Stay up to date with all the latest changes and improvements to Rogo Games.</p>
 
       <div className="space-y-8">
-        {/* April 2025 Updates */}
+        {/* May 2025 Updates */}
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
-              <CardTitle>April 2025 Updates</CardTitle>
+              <CardTitle>May 2025 Updates</CardTitle>
               <Badge>Latest</Badge>
             </div>
+            <CardDescription>Major site improvements and new features</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <h3 className="text-xl font-semibold mb-2">New Features</h3>
+              <ul className="list-disc pl-6 space-y-1">
+                <li>Added "Recently Played" section on homepage showing your last 5 played games</li>
+                <li>Implemented game rating system with thumbs up/down functionality</li>
+                <li>Created dedicated category pages for Mario, Sonic, and Friday Night Funkin' games</li>
+                <li>Added a Proxy page for anonymous web browsing</li>
+                <li>Improved search functionality with better results and filtering</li>
+                <li>Added "Open in New Tab" feature that hides the game URL</li>
+              </ul>
+            </div>
+            <Separator />
+            <div>
+              <h3 className="text-xl font-semibold mb-2">User Experience Improvements</h3>
+              <ul className="list-disc pl-6 space-y-1">
+                <li>Replaced loading screen with skippable ads for better monetization</li>
+                <li>Improved game report functionality</li>
+                <li>Fixed game views tracking and popular games page</li>
+                <li>Sorted all games alphabetically for easier browsing</li>
+                <li>Added skill and timing categories to rhythm games</li>
+              </ul>
+            </div>
+            <Separator />
+            <div>
+              <h3 className="text-xl font-semibold mb-2">Content Updates</h3>
+              <ul className="list-disc pl-6 space-y-1">
+                <li>Fixed metadata for games with IDs 154-230</li>
+                <li>Added more detailed descriptions and controls for all games</li>
+                <li>Removed Coming Soon page and integrated features directly</li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* April 2025 Updates */}
+        <Card>
+          <CardHeader>
+            <CardTitle>April 2025 Updates</CardTitle>
             <CardDescription>Major improvements to game clarity and privacy</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

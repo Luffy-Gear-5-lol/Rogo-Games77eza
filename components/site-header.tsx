@@ -1,69 +1,88 @@
+"use client"
+
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { FlameIcon as Fire, BarChart2, Clock, BookOpen, Smartphone, Mail } from "lucide-react"
+import { Gamepad2, Menu, X } from "lucide-react"
+import { useState } from "react"
+import SearchBar from "./search-bar"
 
 export default function SiteHeader() {
-  return (
-    <header className="bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50 w-full border-b border-gray-800">
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
-              <span className="text-white font-bold">R</span>
-            </div>
-            <span className="text-xl font-bold text-white">Rogo Games</span>
-          </Link>
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-          <nav className="hidden md:flex items-center gap-6">
-            <Link href="/" className="text-white hover:text-purple-400 transition-colors">
-              Home
+  return (
+    <header className="sticky top-0 z-50 w-full border-b border-gray-800 bg-gray-900/95 backdrop-blur supports-[backdrop-filter]:bg-gray-900/75">
+      <div className="container flex h-16 items-center justify-between px-4">
+        <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
+            <Gamepad2 className="h-6 w-6 text-purple-500" />
+            <span className="text-xl font-bold">Rogo Games</span>
+          </Link>
+        </div>
+
+        <div className="hidden md:flex items-center gap-6">
+          <nav className="flex items-center gap-6 text-sm">
+            <Link href="/categories" className="transition-colors hover:text-purple-400">
+              Categories
             </Link>
-            <Link href="/popular" className="text-white hover:text-purple-400 transition-colors">
-              <span className="flex items-center">
-                <Fire className="mr-1 h-4 w-4 text-orange-500" /> Popular Games
-              </span>
+            <Link href="/popular" className="transition-colors hover:text-purple-400">
+              Popular
             </Link>
-            <Link href="/manga" className="text-white hover:text-purple-400 transition-colors">
-              <span className="flex items-center">
-                <BookOpen className="mr-1 h-4 w-4 text-pink-500" /> Manga
-              </span>
+            <Link href="/categories/fnf" className="transition-colors hover:text-purple-400">
+              FNF Games
             </Link>
-            <Link href="/apps" className="text-white hover:text-purple-400 transition-colors">
-              <span className="flex items-center">
-                <Smartphone className="mr-1 h-4 w-4 text-green-500" /> Apps
-              </span>
+            <Link href="/manga" className="transition-colors hover:text-purple-400">
+              Manga
             </Link>
-            <Link href="/poll" className="text-white hover:text-purple-400 transition-colors">
-              <span className="flex items-center">
-                <BarChart2 className="mr-1 h-4 w-4 text-blue-500" /> Weekly Poll
-              </span>
-            </Link>
-            <Link href="/coming-soon" className="text-white hover:text-purple-400 transition-colors">
-              <span className="flex items-center">
-                <Clock className="mr-1 h-4 w-4 text-purple-500" /> Coming Soon
-              </span>
-            </Link>
-            <Link href="/contact" className="text-white hover:text-purple-400 transition-colors">
-              <span className="flex items-center">
-                <Mail className="mr-1 h-4 w-4 text-yellow-500" /> Contact
-              </span>
+            <Link href="/whats-new" className="transition-colors hover:text-purple-400">
+              What's New
             </Link>
           </nav>
-
-          <div className="flex items-center gap-2">
-            <Link href="/search">
-              <Button variant="ghost" size="sm" className="text-white hover:bg-gray-800">
-                Search
-              </Button>
-            </Link>
-            <Link href="/whats-new">
-              <Button variant="outline" size="sm" className="border-purple-600 text-purple-400 hover:bg-purple-600/20">
-                What's New
-              </Button>
-            </Link>
-          </div>
         </div>
+
+        <div className="hidden md:flex">
+          <SearchBar />
+        </div>
+
+        <button className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
+          {mobileMenuOpen ? <X className="h-6 w-6 text-white" /> : <Menu className="h-6 w-6 text-white" />}
+        </button>
       </div>
+
+      {mobileMenuOpen && (
+        <div className="md:hidden">
+          <div className="p-4">
+            <SearchBar />
+          </div>
+          <nav className="flex flex-col space-y-4 p-4">
+            <Link
+              href="/categories"
+              className="p-2 hover:bg-gray-800 rounded-md"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Categories
+            </Link>
+            <Link href="/popular" className="p-2 hover:bg-gray-800 rounded-md" onClick={() => setMobileMenuOpen(false)}>
+              Popular
+            </Link>
+            <Link
+              href="/categories/fnf"
+              className="p-2 hover:bg-gray-800 rounded-md"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              FNF Games
+            </Link>
+            <Link href="/manga" className="p-2 hover:bg-gray-800 rounded-md" onClick={() => setMobileMenuOpen(false)}>
+              Manga
+            </Link>
+            <Link
+              href="/whats-new"
+              className="p-2 hover:bg-gray-800 rounded-md"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              What's New
+            </Link>
+          </nav>
+        </div>
+      )}
     </header>
   )
 }
