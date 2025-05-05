@@ -1,6 +1,8 @@
 "use client"
 
-import { useState, useEffect, type FormEvent } from "react"
+import type React from "react"
+
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
@@ -21,7 +23,7 @@ export default function SearchBar() {
             game.description.toLowerCase().includes(query.toLowerCase()) ||
             (game.categories && game.categories.some((cat) => cat.toLowerCase().includes(query.toLowerCase()))),
         )
-        .slice(0, 10)
+        .slice(0, 5)
 
       setResults(searchResults)
       setShowResults(true)
@@ -31,7 +33,7 @@ export default function SearchBar() {
     }
   }, [query])
 
-  const handleSearch = (e: FormEvent) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (query.trim()) {
       router.push(`/search?q=${encodeURIComponent(query)}`)
@@ -39,8 +41,8 @@ export default function SearchBar() {
     }
   }
 
-  const handleGameClick = (slug: string) => {
-    router.push(`/games/${slug}`)
+  const handleGameClick = (gameId: number) => {
+    router.push(`/game/${gameId}`)
     setQuery("")
     setShowResults(false)
   }
@@ -65,7 +67,7 @@ export default function SearchBar() {
               <li
                 key={game.id}
                 className="px-4 py-2 hover:bg-gray-700 cursor-pointer"
-                onClick={() => handleGameClick(game.slug)}
+                onClick={() => handleGameClick(game.id)}
               >
                 <div className="font-medium">{game.title}</div>
                 <div className="text-xs text-gray-400">
@@ -74,11 +76,6 @@ export default function SearchBar() {
               </li>
             ))}
           </ul>
-          <div className="border-t border-gray-700 p-2">
-            <button onClick={handleSearch} className="w-full text-center text-sm text-purple-400 hover:text-purple-300">
-              See all results for "{query}"
-            </button>
-          </div>
         </div>
       )}
     </div>

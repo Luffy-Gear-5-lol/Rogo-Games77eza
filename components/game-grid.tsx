@@ -11,26 +11,12 @@ interface GameGridProps {
   games: Game[]
 }
 
-export default function GameGrid({ games = [] }: GameGridProps) {
+export default function GameGrid({ games }: GameGridProps) {
   const [hoveredGame, setHoveredGame] = useState<number | null>(null)
   const showViewCounts = isAdmin()
 
-  // If no games are provided, show a message
-  if (!games || games.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <h3 className="text-xl font-bold mb-2">No Games Found</h3>
-        <p className="text-gray-400">Check back later for more games</p>
-      </div>
-    )
-  }
-
   // Function to get status indicator
   const getStatusIndicator = (game: Game) => {
-    if (!game) {
-      return { color: "text-white", icon: <AlertCircle className="h-3 w-3 mr-1" /> }
-    }
-
     if (game.isWorking === undefined) {
       return { color: "text-white", icon: <AlertCircle className="h-3 w-3 mr-1" /> }
     } else if (game.isWorking) {
@@ -43,8 +29,6 @@ export default function GameGrid({ games = [] }: GameGridProps) {
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
       {games.map((game) => {
-        if (!game) return null
-
         // Determine the link based on whether it's a Papa's game
         const gameLink = game.series === "papas" ? "/series/papas" : `/game/${game.id}`
         const statusIndicator = getStatusIndicator(game)
