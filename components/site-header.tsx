@@ -1,126 +1,285 @@
 "use client"
 
+import type React from "react"
+
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Gamepad2, Menu, X, Grid, Flame, Smartphone, BookOpen, BarChart3, Bell } from "lucide-react"
-import { useState } from "react"
-import SearchBar from "./search-bar"
+import { usePathname } from "next/navigation"
+import { Menu, X, Search, Grid, Gamepad2, Book, BarChart2, Bell, Smartphone, Flame } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function SiteHeader() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const pathname = usePathname()
+
+  // Close menu when route changes
+  useEffect(() => {
+    setIsMenuOpen(false)
+  }, [pathname])
+
+  // Handle search submission
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      window.location.href = `/search?q=${encodeURIComponent(searchQuery)}`
+    }
+  }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-800 bg-gray-900/95 backdrop-blur supports-[backdrop-filter]:bg-gray-900/75">
-      <div className="container flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-2">
-          <Link href="/" className="flex items-center gap-2">
-            <Gamepad2 className="h-6 w-6 text-purple-500" />
-            <span className="text-xl font-bold">Rogo Games</span>
+    <header className="sticky top-0 z-50 w-full border-b border-gray-800 bg-black/95 backdrop-blur supports-[backdrop-filter]:bg-black/60">
+      <div className="container flex h-14 items-center">
+        <div className="mr-4 flex">
+          <Link href="/" className="mr-6 flex items-center space-x-2">
+            <span className="hidden font-bold sm:inline-block">Rogo Games</span>
           </Link>
-        </div>
 
-        <div className="hidden md:flex items-center gap-6">
-          <nav className="flex items-center gap-6 text-sm">
-            <Link href="/categories" className="flex items-center gap-1 transition-colors hover:text-purple-400">
-              <Grid className="h-4 w-4" />
-              <span>Categories</span>
-            </Link>
-            <Link href="/popular" className="flex items-center gap-1 transition-colors hover:text-purple-400">
-              <Flame className="h-4 w-4 text-orange-500" />
-              <span>Popular</span>
-            </Link>
-            <Link href="/categories/fnf" className="flex items-center gap-1 transition-colors hover:text-purple-400">
-              <Gamepad2 className="h-4 w-4" />
-              <span>FNF Games</span>
-            </Link>
-            <Link href="/apps" className="flex items-center gap-1 transition-colors hover:text-purple-400">
-              <Smartphone className="h-4 w-4" />
-              <span>Apps</span>
-            </Link>
-            <Link href="/manga" className="flex items-center gap-1 transition-colors hover:text-purple-400">
-              <BookOpen className="h-4 w-4" />
-              <span>Manga</span>
-            </Link>
-            <Link href="/poll" className="flex items-center gap-1 transition-colors hover:text-purple-400">
-              <BarChart3 className="h-4 w-4" />
-              <span>Poll</span>
-            </Link>
-            <Link href="/whats-new" className="flex items-center gap-1 transition-colors hover:text-purple-400">
-              <Bell className="h-4 w-4" />
-              <span>What's New</span>
-            </Link>
-          </nav>
-        </div>
-
-        <div className="hidden md:flex relative">
-          <SearchBar />
-        </div>
-
-        <button className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
-          {mobileMenuOpen ? <X className="h-6 w-6 text-white" /> : <Menu className="h-6 w-6 text-white" />}
-        </button>
-      </div>
-
-      {mobileMenuOpen && (
-        <div className="md:hidden">
-          <div className="p-4">
-            <SearchBar />
-          </div>
-          <nav className="flex flex-col space-y-4 p-4">
+          <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
             <Link
-              href="/categories"
-              className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded-md"
-              onClick={() => setMobileMenuOpen(false)}
+              href="/"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-purple-600",
+                pathname === "/" ? "text-purple-600" : "text-gray-400",
+              )}
             >
-              <Grid className="h-4 w-4" />
-              Categories
+              Home
             </Link>
             <Link
               href="/popular"
-              className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded-md"
-              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-purple-600 flex items-center",
+                pathname === "/popular" ? "text-purple-600" : "text-gray-400",
+              )}
             >
-              <Flame className="h-4 w-4 text-orange-500" />
+              <Flame className="mr-1 h-4 w-4" />
               Popular
             </Link>
             <Link
-              href="/categories/fnf"
-              className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded-md"
-              onClick={() => setMobileMenuOpen(false)}
+              href="/categories"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-purple-600 flex items-center",
+                pathname === "/categories" || pathname.startsWith("/categories/") ? "text-purple-600" : "text-gray-400",
+              )}
             >
-              <Gamepad2 className="h-4 w-4" />
+              <Grid className="mr-1 h-4 w-4" />
+              Categories
+            </Link>
+            <Link
+              href="/categories/fnf"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-purple-600 flex items-center",
+                pathname === "/categories/fnf" ? "text-purple-600" : "text-gray-400",
+              )}
+            >
+              <Gamepad2 className="mr-1 h-4 w-4" />
               FNF Games
             </Link>
             <Link
-              href="/apps"
-              className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded-md"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <Smartphone className="h-4 w-4" />
-              Apps
-            </Link>
-            <Link
               href="/manga"
-              className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded-md"
-              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-purple-600 flex items-center",
+                pathname === "/manga" ? "text-purple-600" : "text-gray-400",
+              )}
             >
-              <BookOpen className="h-4 w-4" />
+              <Book className="mr-1 h-4 w-4" />
               Manga
             </Link>
             <Link
               href="/poll"
-              className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded-md"
-              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-purple-600 flex items-center",
+                pathname === "/poll" ? "text-purple-600" : "text-gray-400",
+              )}
             >
-              <BarChart3 className="h-4 w-4" />
+              <BarChart2 className="mr-1 h-4 w-4" />
               Poll
             </Link>
             <Link
               href="/whats-new"
-              className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded-md"
-              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-purple-600 flex items-center",
+                pathname === "/whats-new" ? "text-purple-600" : "text-gray-400",
+              )}
             >
-              <Bell className="h-4 w-4" />
+              <Bell className="mr-1 h-4 w-4" />
               What's New
+            </Link>
+            <Link
+              href="/apps"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-purple-600 flex items-center",
+                pathname === "/apps" ? "text-purple-600" : "text-gray-400",
+              )}
+            >
+              <Smartphone className="mr-1 h-4 w-4" />
+              Apps
+            </Link>
+          </nav>
+        </div>
+
+        <div className="flex flex-1 items-center justify-end space-x-2">
+          {/* Desktop search */}
+          <form onSubmit={handleSearch} className="hidden md:flex relative w-full max-w-sm items-center">
+            <Input
+              type="search"
+              placeholder="Search games..."
+              className="bg-gray-900 border-gray-700 focus-visible:ring-purple-600"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <Button
+              type="submit"
+              variant="ghost"
+              size="icon"
+              className="absolute right-0 top-0 h-full text-gray-400 hover:text-white"
+            >
+              <Search className="h-5 w-5" />
+              <span className="sr-only">Search</span>
+            </Button>
+          </form>
+
+          <ThemeToggle />
+
+          {/* Mobile search button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => {
+              setIsSearchOpen(!isSearchOpen)
+              setIsMenuOpen(false)
+            }}
+          >
+            <Search className="h-5 w-5" />
+            <span className="sr-only">Search</span>
+          </Button>
+
+          {/* Mobile menu button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => {
+              setIsMenuOpen(!isMenuOpen)
+              setIsSearchOpen(false)
+            }}
+          >
+            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            <span className="sr-only">Toggle menu</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* Mobile search */}
+      {isSearchOpen && (
+        <div className="container py-4 md:hidden">
+          <form onSubmit={handleSearch} className="relative">
+            <Input
+              type="search"
+              placeholder="Search games..."
+              className="bg-gray-900 border-gray-700"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <Button
+              type="submit"
+              variant="ghost"
+              size="icon"
+              className="absolute right-0 top-0 h-full text-gray-400 hover:text-white"
+            >
+              <Search className="h-5 w-5" />
+              <span className="sr-only">Search</span>
+            </Button>
+          </form>
+        </div>
+      )}
+
+      {/* Mobile menu */}
+      {isMenuOpen && (
+        <div className="container py-4 md:hidden">
+          <nav className="flex flex-col space-y-4">
+            <Link
+              href="/"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-purple-600",
+                pathname === "/" ? "text-purple-600" : "text-gray-400",
+              )}
+            >
+              Home
+            </Link>
+            <Link
+              href="/popular"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-purple-600 flex items-center",
+                pathname === "/popular" ? "text-purple-600" : "text-gray-400",
+              )}
+            >
+              <Flame className="mr-2 h-4 w-4" />
+              Popular
+            </Link>
+            <Link
+              href="/categories"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-purple-600 flex items-center",
+                pathname === "/categories" || pathname.startsWith("/categories/") ? "text-purple-600" : "text-gray-400",
+              )}
+            >
+              <Grid className="mr-2 h-4 w-4" />
+              Categories
+            </Link>
+            <Link
+              href="/categories/fnf"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-purple-600 flex items-center",
+                pathname === "/categories/fnf" ? "text-purple-600" : "text-gray-400",
+              )}
+            >
+              <Gamepad2 className="mr-2 h-4 w-4" />
+              FNF Games
+            </Link>
+            <Link
+              href="/manga"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-purple-600 flex items-center",
+                pathname === "/manga" ? "text-purple-600" : "text-gray-400",
+              )}
+            >
+              <Book className="mr-2 h-4 w-4" />
+              Manga
+            </Link>
+            <Link
+              href="/poll"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-purple-600 flex items-center",
+                pathname === "/poll" ? "text-purple-600" : "text-gray-400",
+              )}
+            >
+              <BarChart2 className="mr-2 h-4 w-4" />
+              Poll
+            </Link>
+            <Link
+              href="/whats-new"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-purple-600 flex items-center",
+                pathname === "/whats-new" ? "text-purple-600" : "text-gray-400",
+              )}
+            >
+              <Bell className="mr-2 h-4 w-4" />
+              What's New
+            </Link>
+            <Link
+              href="/apps"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-purple-600 flex items-center",
+                pathname === "/apps" ? "text-purple-600" : "text-gray-400",
+              )}
+            >
+              <Smartphone className="mr-2 h-4 w-4" />
+              Apps
             </Link>
           </nav>
         </div>

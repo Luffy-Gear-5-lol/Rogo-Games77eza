@@ -5,6 +5,7 @@ import GameGrid from "@/components/game-grid"
 import { games } from "@/data/games"
 import { getGameViews, getPopularGames, getNextPopularReset } from "@/actions/game-actions"
 import { isAdmin } from "@/utils/admin-utils"
+import { sortGames } from "@/utils/sort-utils"
 
 async function PopularGamesContent() {
   // Get popular game IDs based on view count
@@ -35,6 +36,9 @@ async function PopularGamesContent() {
     })
     .filter(Boolean) as typeof games
 
+  // Sort the popular games
+  const sortedPopularGames = sortGames(popularGames)
+
   return (
     <>
       <div className="mb-8">
@@ -51,10 +55,10 @@ async function PopularGamesContent() {
         )}
       </div>
 
-      {popularGames.length > 0 ? (
+      {sortedPopularGames.length > 0 ? (
         <>
           <div className="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {popularGames.slice(0, 4).map((game) => (
+            {sortedPopularGames.slice(0, 4).map((game) => (
               <Link key={game.id} href={`/game/${game.id}`} className="group">
                 <div className="overflow-hidden rounded-lg bg-gray-800 border border-gray-700 transition-all hover:shadow-lg hover:shadow-purple-500/20">
                   <div className="relative aspect-video overflow-hidden">
@@ -78,7 +82,7 @@ async function PopularGamesContent() {
             ))}
           </div>
 
-          <GameGrid games={popularGames.slice(4)} />
+          <GameGrid games={sortedPopularGames.slice(4)} />
         </>
       ) : (
         <div className="text-center py-12">

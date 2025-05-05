@@ -1,109 +1,117 @@
 import { Suspense } from "react"
 import Link from "next/link"
-import { games } from "@/data/games"
-import { sortGames } from "@/utils/sort-utils"
+import { ChevronRight, Flame, Gamepad2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import FeaturedGames from "@/components/featured-games"
 import GameGrid from "@/components/game-grid"
 import CategoryFilter from "@/components/category-filter"
-import RecentlyPlayed from "@/components/recently-played"
-import GameRecommendations from "@/components/game-recommendations"
+import { games } from "@/data/games"
+import { sortGames } from "@/utils/sort-utils"
 
 export default function HomePage() {
   // Get featured games
   const featuredGames = games.filter((game) => game.featured)
 
-  // Sort the games
+  // Get popular games
+  const popularGames = games.filter((game) => game.popular).slice(0, 12)
+
+  // Get FNF games
+  const fnfGames = games
+    .filter(
+      (game) =>
+        game.title.toLowerCase().includes("fnf") ||
+        game.categories?.some((cat) => cat.toLowerCase() === "fnf") ||
+        game.title.toLowerCase().includes("friday night funkin"),
+    )
+    .slice(0, 6)
+
+  // Sort all games numerically and then alphabetically
   const sortedGames = sortGames(games)
 
-  // Get all unique categories
-  const allCategories = Array.from(new Set(games.flatMap((game) => game.categories || []))).sort()
+  // Get recent games (last 12 added)
+  const recentGames = [...games].sort((a, b) => b.id - a.id).slice(0, 12)
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
       <div className="container mx-auto px-4 py-8">
-        {/* Hero Section */}
-        <section className="mb-12">
-          <div className="relative rounded-lg overflow-hidden">
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: "url('/images/hero-bg.jpg')" }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-900/90 to-indigo-900/70" />
-            <div className="relative py-16 px-8 md:py-24 md:px-12">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">Welcome to Rogo Games</h1>
-              <p className="text-xl md:text-2xl mb-8 max-w-2xl">
-                Discover and play the best online games for free. New games added regularly! 🎮
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Link
-                  href="/popular"
-                  className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-full transition-colors"
-                >
-                  Popular Games
-                </Link>
-                <Link
-                  href="/categories"
-                  className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-full transition-colors"
-                >
-                  Browse Categories
-                </Link>
-              </div>
+        <Suspense
+          fallback={
+            <div className="flex justify-center items-center py-20">
+              <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
             </div>
+          }
+        >
+          <FeaturedGames games={featuredGames} />
+        </Suspense>
+
+        <div className="mt-12">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-2xl font-bold flex items-center">
+              <Flame className="mr-2 h-5 w-5 text-orange-500" />
+              Popular Games
+            </h2>
+            <Link href="/popular">
+              <Button variant="link" className="text-purple-400 hover:text-purple-300">
+                View All <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
-        </section>
+          <GameGrid games={sortGames(popularGames)} />
+        </div>
 
-        {/* Featured Games */}
-        {featuredGames.length > 0 && (
-          <section className="mb-12">
-            <h2 className="text-2xl font-bold mb-6">Featured Games</h2>
-            <Suspense
-              fallback={
-                <div className="flex justify-center items-center py-20">
-                  <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
-                </div>
-              }
-            >
-              <FeaturedGames games={featuredGames} />
-            </Suspense>
-          </section>
-        )}
+        <div className="mt-12">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-2xl font-bold flex items-center">
+              <Gamepad2 className="mr-2 h-5 w-5" />
+              FNF Games
+            </h2>
+            <Link href="/categories/fnf">
+              <Button variant="link" className="text-purple-400 hover:text-purple-300">
+                View All <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+          <GameGrid games={sortGames(fnfGames)} />
+        </div>
 
-        {/* Recently Played */}
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Recently Played</h2>
-          <Suspense
-            fallback={
-              <div className="flex justify-center items-center py-20">
-                <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
-              </div>
-            }
-          >
-            <RecentlyPlayed />
-          </Suspense>
-        </section>
+        <div className="mt-12">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold">Browse by Category</h2>
+          </div>
+          <CategoryFilter />
+        </div>
 
-        {/* Game Recommendations */}
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Recommended For You</h2>
-          <Suspense
-            fallback={
-              <div className="flex justify-center items-center py-20">
-                <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
-              </div>
-            }
-          >
-            <GameRecommendations />
-          </Suspense>
-        </section>
+        <div className="mt-12">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold">Recently Added</h2>
+          </div>
+          <GameGrid games={recentGames} />
+        </div>
 
-        {/* All Games with Category Filter */}
-        <section>
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-            <h2 className="text-2xl font-bold mb-4 md:mb-0">All Games</h2>
-            <CategoryFilter categories={allCategories} />
+        <div className="mt-12">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold">All Games</h2>
+            <p className="text-gray-400 mt-1">Browse our complete collection of games</p>
           </div>
           <GameGrid games={sortedGames} />
-        </section>
+        </div>
+
+        {/* Skip Ad Button */}
+        <div className="fixed bottom-4 left-4 z-10">
+          <Button variant="outline" className="bg-black/80 border-gray-700 hover:bg-black">
+            Skip Ad
+          </Button>
+        </div>
+
+        {/* Game Controls */}
+        <div className="fixed bottom-4 right-4 z-10 flex gap-2">
+          <Button variant="outline" className="bg-black/80 border-gray-700 hover:bg-black">
+            Fullscreen
+          </Button>
+          <Button variant="outline" className="bg-black/80 border-gray-700 hover:bg-black">
+            Report Issue
+          </Button>
+        </div>
       </div>
     </main>
   )

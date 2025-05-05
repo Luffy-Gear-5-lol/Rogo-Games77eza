@@ -13,8 +13,8 @@ export default function FNFCategoryPage() {
       game.title.toLowerCase().includes("friday night funkin"),
   )
 
-  // Sort the games
-  const sortedGames = sortGames(fnfGames)
+  // Sort the FNF games
+  const sortedFnfGames = sortGames(fnfGames)
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
@@ -30,12 +30,12 @@ export default function FNFCategoryPage() {
             Friday Night Funkin' Games
           </h1>
           <p className="mt-2 text-gray-400">
-            {sortedGames.length} {sortedGames.length === 1 ? "game" : "games"} in this category
+            {sortedFnfGames.length} {sortedFnfGames.length === 1 ? "game" : "games"} in this category
           </p>
         </div>
 
-        {sortedGames.length > 0 ? (
-          <GameGrid games={sortedGames} />
+        {sortedFnfGames.length > 0 ? (
+          <GameGrid games={sortedFnfGames} />
         ) : (
           <div className="text-center py-12">
             <p className="text-gray-400">No FNF games found.</p>
