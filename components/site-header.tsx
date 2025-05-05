@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Gamepad2, Menu, X } from "lucide-react"
+import { Gamepad2, Menu, X, Grid, Flame, Smartphone, BookOpen, BarChart3, Bell } from "lucide-react"
 import { useState } from "react"
 import SearchBar from "./search-bar"
 
@@ -20,26 +20,33 @@ export default function SiteHeader() {
 
         <div className="hidden md:flex items-center gap-6">
           <nav className="flex items-center gap-6 text-sm">
-            <Link href="/categories" className="transition-colors hover:text-purple-400">
-              Categories
+            <Link href="/categories" className="flex items-center gap-1 transition-colors hover:text-purple-400">
+              <Grid className="h-4 w-4" />
+              <span>Categories</span>
             </Link>
-            <Link href="/popular" className="transition-colors hover:text-purple-400">
-              Popular
+            <Link href="/popular" className="flex items-center gap-1 transition-colors hover:text-purple-400">
+              <Flame className="h-4 w-4 text-orange-500" />
+              <span>Popular</span>
             </Link>
-            <Link href="/categories/fnf" className="transition-colors hover:text-purple-400">
-              FNF Games
+            <Link href="/categories/fnf" className="flex items-center gap-1 transition-colors hover:text-purple-400">
+              <Gamepad2 className="h-4 w-4" />
+              <span>FNF Games</span>
             </Link>
-            <Link href="/apps" className="transition-colors hover:text-purple-400">
-              Apps
+            <Link href="/apps" className="flex items-center gap-1 transition-colors hover:text-purple-400">
+              <Smartphone className="h-4 w-4" />
+              <span>Apps</span>
             </Link>
-            <Link href="/manga" className="transition-colors hover:text-purple-400">
-              Manga
+            <Link href="/manga" className="flex items-center gap-1 transition-colors hover:text-purple-400">
+              <BookOpen className="h-4 w-4" />
+              <span>Manga</span>
             </Link>
-            <Link href="/poll" className="transition-colors hover:text-purple-400">
-              Poll
+            <Link href="/poll" className="flex items-center gap-1 transition-colors hover:text-purple-400">
+              <BarChart3 className="h-4 w-4" />
+              <span>Poll</span>
             </Link>
-            <Link href="/whats-new" className="transition-colors hover:text-purple-400">
-              What's New
+            <Link href="/whats-new" className="flex items-center gap-1 transition-colors hover:text-purple-400">
+              <Bell className="h-4 w-4" />
+              <span>What's New</span>
             </Link>
           </nav>
         </div>
@@ -61,35 +68,58 @@ export default function SiteHeader() {
           <nav className="flex flex-col space-y-4 p-4">
             <Link
               href="/categories"
-              className="p-2 hover:bg-gray-800 rounded-md"
+              className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded-md"
               onClick={() => setMobileMenuOpen(false)}
             >
+              <Grid className="h-4 w-4" />
               Categories
             </Link>
-            <Link href="/popular" className="p-2 hover:bg-gray-800 rounded-md" onClick={() => setMobileMenuOpen(false)}>
+            <Link
+              href="/popular"
+              className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded-md"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Flame className="h-4 w-4 text-orange-500" />
               Popular
             </Link>
             <Link
               href="/categories/fnf"
-              className="p-2 hover:bg-gray-800 rounded-md"
+              className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded-md"
               onClick={() => setMobileMenuOpen(false)}
             >
+              <Gamepad2 className="h-4 w-4" />
               FNF Games
             </Link>
-            <Link href="/apps" className="p-2 hover:bg-gray-800 rounded-md" onClick={() => setMobileMenuOpen(false)}>
+            <Link
+              href="/apps"
+              className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded-md"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Smartphone className="h-4 w-4" />
               Apps
             </Link>
-            <Link href="/manga" className="p-2 hover:bg-gray-800 rounded-md" onClick={() => setMobileMenuOpen(false)}>
+            <Link
+              href="/manga"
+              className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded-md"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <BookOpen className="h-4 w-4" />
               Manga
             </Link>
-            <Link href="/poll" className="p-2 hover:bg-gray-800 rounded-md" onClick={() => setMobileMenuOpen(false)}>
+            <Link
+              href="/poll"
+              className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded-md"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <BarChart3 className="h-4 w-4" />
               Poll
             </Link>
             <Link
               href="/whats-new"
-              className="p-2 hover:bg-gray-800 rounded-md"
+              className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded-md"
               onClick={() => setMobileMenuOpen(false)}
             >
+              <Bell className="h-4 w-4" />
               What's New
             </Link>
           </nav>

@@ -59,10 +59,16 @@
     "vaul": "^0.9.6",
     "zod": "^3.24.1",
     "google-auth-library": "latest",
+    "@remix-run/react": "latest",
+    "@sveltejs/kit": "latest",
+    "svelte": "latest",
+    "vue": "latest",
+    "vue-router": "latest",
     "fs": "latest",
     "path": "latest",
     "google-spreadsheet": "latest",
-    "uuid": "latest"
+    "uuid": "latest",
+    "@vercel/analytics": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

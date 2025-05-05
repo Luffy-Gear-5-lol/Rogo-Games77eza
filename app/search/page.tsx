@@ -1,22 +1,24 @@
-"use client"
-
-import { useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Search } from "lucide-react"
 import { games } from "@/data/games"
 import GameGrid from "@/components/game-grid"
+import { sortGames } from "@/utils/sort-utils"
 
-export default function SearchPage() {
-  const searchParams = useSearchParams()
-  const query = searchParams.get("q") || ""
+export default function SearchPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined }
+}) {
+  const query = typeof searchParams.q === "string" ? searchParams.q : ""
 
-  // Filter games based on search query
-  const filteredGames = games.filter(
-    (game) =>
-      game.title.toLowerCase().includes(query.toLowerCase()) ||
-      game.description.toLowerCase().includes(query.toLowerCase()) ||
-      (game.categories && game.categories.some((cat) => cat.toLowerCase().includes(query.toLowerCase()))),
-  )
+  // Filter games by search query
+  const filteredGames = games.filter((game) => {
+    const searchableText = `${game.title} ${game.description} ${game.categories?.join(" ") || ""}`.toLowerCase()
+    return searchableText.includes(query.toLowerCase())
+  })
+
+  // Sort the games
+  const sortedGames = sortGames(filteredGames)
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
@@ -27,18 +29,30 @@ export default function SearchPage() {
         </Link>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">Search Results</h1>
-          <p className="mt-2 text-gray-400">
-            {filteredGames.length} {filteredGames.length === 1 ? "game" : "games"} found for "{query}"
-          </p>
+          <h1 className="text-3xl font-bold flex items-center">
+            <Search className="mr-2 h-6 w-6" />
+            Search Results
+          </h1>
+          {query ? (
+            <p className="mt-2 text-gray-400">
+              Found {sortedGames.length} {sortedGames.length === 1 ? "result" : "results"} for "{query}"
+            </p>
+          ) : (
+            <p className="mt-2 text-gray-400">Enter a search term to find games</p>
+          )}
         </div>
 
-        {filteredGames.length > 0 ? (
-          <GameGrid games={filteredGames} />
+        {query ? (
+          sortedGames.length > 0 ? (
+            <GameGrid games={sortedGames} />
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-400">No games found matching your search.</p>
+            </div>
+          )
         ) : (
           <div className="text-center py-12">
-            <h2 className="text-2xl font-bold mb-4">No games found</h2>
-            <p className="text-gray-400 mb-8">Try searching for something else</p>
+            <p className="text-gray-400">Please enter a search term to find games.</p>
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import Link from "next/link"
-import { ArrowLeft, Eye, Calendar } from "lucide-react"
+import { ArrowLeft, Eye, Calendar, Flame } from "lucide-react"
 import GameGrid from "@/components/game-grid"
 import { games } from "@/data/games"
 import { getGameViews, getPopularGames, getNextPopularReset } from "@/actions/game-actions"
@@ -38,7 +38,10 @@ async function PopularGamesContent() {
   return (
     <>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">🔥 Popular Games</h1>
+        <h1 className="text-3xl font-bold flex items-center">
+          <Flame className="mr-2 h-6 w-6 text-orange-500" />
+          Popular Games
+        </h1>
         <p className="mt-2 text-gray-400">The most played games on Rogo Games in the last 2 weeks</p>
         {showViewCounts && (
           <div className="mt-2 flex items-center text-sm text-gray-400">
