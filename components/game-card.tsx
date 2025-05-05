@@ -29,11 +29,14 @@ export default function GameCard({ game }: GameCardProps) {
 
   const statusIndicator = getStatusIndicator()
 
+  // Use a default placeholder if no image is provided
+  const imageSrc = game.image || "/placeholder.svg?height=200&width=350"
+
   return (
     <Card className="overflow-hidden bg-gray-800 border-gray-700 transition-all hover:shadow-lg hover:shadow-purple-500/20">
       <div className="relative aspect-video overflow-hidden">
         <Image
-          src={game.image || "/placeholder.svg"}
+          src={imageSrc || "/placeholder.svg"}
           alt={game.title}
           fill
           className="object-cover transition-transform hover:scale-105"
@@ -42,6 +45,11 @@ export default function GameCard({ game }: GameCardProps) {
           <div className="absolute top-2 right-2 bg-black/60 rounded-full px-2 py-1 text-xs flex items-center z-10">
             <Eye className="h-3 w-3 mr-1" />
             {game.views.toLocaleString()}
+          </div>
+        )}
+        {game.popular && (
+          <div className="absolute top-2 left-2 bg-red-500 text-white rounded-full px-3 py-1 text-xs font-bold z-10">
+            Popular
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 transition-opacity hover:opacity-100">

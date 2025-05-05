@@ -1,13 +1,13 @@
 import type { Game } from "@/types/game"
 
 export const games: Game[] = [
- {
+  {
     id: 1,
     title: "Flappy Bird",
     slug: "flappy-bird",
     description:
       "Navigate a bird through a series of pipes without touching them. Tap or click to make the bird flap its wings and gain height. This addictive game requires precise timing and patience to master.",
-    image: "",
+    image: "/images/games/flappy-bird-icon.png", // Using the new Flappy Bird icon
     categories: ["Arcade", "Casual", "Endless Runner"],
     featured: true,
     popular: true,
@@ -157,8 +157,7 @@ export const games: Game[] = [
       "Master the art of drifting in various cars and tracks in this realistic driving game. Earn points for successful drifts, upgrade your vehicles, and unlock new tracks as you become a drift racing champion.",
     image: "/images/games/drift-hunters.jpg",
     categories: ["Racing", "Driving", "Simulation"],
-    playUrl:
-      "https://seraph-eight-omega.vercel.app/games/drifthunters/index.html",
+    playUrl: "https://seraph-eight-omega.vercel.app/games/drifthunters/index.html",
     controls: "Arrow keys to drive, Space for handbrake, Shift to change gears.",
     isWorking: true,
   },
@@ -2011,7 +2010,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 169,
     title: "Pizza Tower",
     slug: "Pizza Tower",
@@ -2066,7 +2065,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 174,
     title: "FNF-Cheecky",
     slug: "FNF-Cheecky",
@@ -2077,7 +2076,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 175,
     title: "FNF-Agoti",
     slug: "FNF-Agoti",
@@ -2088,7 +2087,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 176,
     title: "FNF-Wittyv2",
     slug: "FNF-Wittyv2",
@@ -2110,7 +2109,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 178,
     title: "FNF-Corrupted Spongebob",
     slug: "FNF-Corrupted Spongebob",
@@ -2154,7 +2153,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 182,
     title: "FNF-qt more keys",
     slug: "FNFqtmorekeys",
@@ -2187,7 +2186,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 185,
     title: "fnf slenderman",
     slug: "FNFslenderman",
@@ -2220,7 +2219,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 188,
     title: "fnf dusttale",
     slug: "FNFlol",
@@ -2275,7 +2274,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 193,
     title: "Rammerhead",
     slug: "Proxy",
@@ -2286,7 +2285,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: false,
   },
-   {
+  {
     id: 194,
     title: "fnf-trollface",
     slug: "fnf-vs-trollface",
@@ -2297,7 +2296,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 195,
     title: "fnf-steve",
     slug: "fnf-vs-steve",
@@ -2330,7 +2329,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
- {
+  {
     id: 198,
     title: "fnf-vs-8bitryan",
     slug: "fnf-8bitryan-mod",
@@ -2352,7 +2351,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 200,
     title: "fnf-vs-Garcello(DFJK-controls+arrow keys)",
     slug: "fnf-Garcello-mod",
@@ -2374,7 +2373,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 202,
     title: "fnf-vs-sunday",
     slug: "fnf-sunday-mod",
@@ -2396,7 +2395,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 204,
     title: "fnf-vs-sky",
     slug: "fnf-sky-mod",
@@ -2418,7 +2417,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 206,
     title: "Pokemon Black 2",
     slug: "Poekemon-Black-2",
@@ -2429,7 +2428,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 207,
     title: "The Binding of Issac wrath of the lamb",
     slug: "Issac",
@@ -2440,7 +2439,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 208,
     title: "Doodle God",
     slug: "Doodle-God",
@@ -2451,7 +2450,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-    {
+  {
     id: 209,
     title: "Pandemic 2",
     slug: "Pandemic-2",
@@ -2484,7 +2483,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 212,
     title: "Metroid-fusion",
     slug: "Medroid",
@@ -2506,7 +2505,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 214,
     title: "Fnf-Stickman",
     slug: "FNF-Stickman-Mod",
@@ -2517,7 +2516,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 215,
     title: "Fnf-B-sides",
     slug: "FNF-B-Sides-Mod",
@@ -2528,7 +2527,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 216,
     title: "Henery Stikman: Crossing the Pit",
     slug: "Henery Stickman: Crossing the Pit",
@@ -2539,7 +2538,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 217,
     title: "Henery Stickman: Stealing the Diamond",
     slug: "Henery Stickman: stealing the Diamond",
@@ -2550,7 +2549,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 218,
     title: "Henery Stickman: Infiltrating The Airship",
     slug: "Henery Stickman: Infiltrating the Airship",
@@ -2560,8 +2559,8 @@ export const games: Game[] = [
     playUrl: "https://seraph-eight-omega.vercel.app/games/infiltratingtheairship/index.html",
     controls: "IDC ",
     isWorking: true,
-  }, 
-   {
+  },
+  {
     id: 219,
     title: "Henery Stickman: Fleeing the Complex",
     slug: "Henery Sticklan: Fleeing the Complex",
@@ -2572,7 +2571,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 220,
     title: "Henery Stickman: Escaping the Prison ",
     slug: "Henery Stickman: Escaping the Prison",
@@ -2583,7 +2582,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-   {
+  {
     id: 221,
     title: "Riddle school 1",
     slug: "Riddle school 1",
@@ -2693,7 +2692,7 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
-  ]
+]
 
 export const manga: Game[] = [
   {

@@ -44,7 +44,7 @@ export default function SiteHeader() {
           </nav>
         </div>
 
-        <div className="hidden md:flex">
+        <div className="hidden md:flex relative">
           <SearchBar />
         </div>
 

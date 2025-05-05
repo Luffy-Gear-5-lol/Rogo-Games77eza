@@ -16,9 +16,9 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-12">
-          <h1 className="text-3xl font-bold mb-6">Welcome to Rogo Games</h1>
-          <p className="text-gray-300 mb-4">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-2">Welcome to Rogo Games</h1>
+          <p className="text-gray-300">
             Discover and play the best online games for free. New games added regularly! 🎮
           </p>
         </div>
