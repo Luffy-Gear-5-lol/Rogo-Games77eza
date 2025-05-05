@@ -59,9 +59,9 @@ export const games: Game[] = [
     title: "Flappy Bird",
     slug: "flappy-bird",
     description: "Navigate a bird through pipes without touching them in this addictively challenging game.",
-    image: "/images/games/flappy-bird.jpg",
+    image: "/images/flappy-bird-icon.png", // Updated to use the new icon
     categories: ["Arcade", "Casual", "Skill"],
-    featured: false,
+    featured: true, // Set to true to feature it on the home page
     popular: true,
     playUrl: "https://flappybird.io/",
     controls: "Click, tap, or press spacebar to make the bird flap its wings and gain height.",

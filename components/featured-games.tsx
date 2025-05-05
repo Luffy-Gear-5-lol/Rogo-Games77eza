@@ -13,7 +13,6 @@ interface FeaturedGamesProps {
 
 export default function FeaturedGames({ games }: FeaturedGamesProps) {
   const [activeIndex, setActiveIndex] = useState(0)
-  const activeGame = games && games.length > 0 ? games[activeIndex] : null
   const showViewCounts = isAdmin()
 
   // If no games are provided, return null
@@ -21,8 +20,16 @@ export default function FeaturedGames({ games }: FeaturedGamesProps) {
     return null
   }
 
+  // Make sure activeIndex is valid
+  const safeActiveIndex = activeIndex < games.length ? activeIndex : 0
+  const activeGame = games[safeActiveIndex]
+
   // Function to get status indicator
   const getStatusIndicator = (game: Game) => {
+    if (!game) {
+      return { color: "text-white", icon: <AlertCircle className="h-3 w-3 mr-1" /> }
+    }
+
     if (game.isWorking === undefined) {
       return { color: "text-white", icon: <AlertCircle className="h-3 w-3 mr-1" /> }
     } else if (game.isWorking) {
@@ -76,13 +83,15 @@ export default function FeaturedGames({ games }: FeaturedGamesProps) {
       </div>
       <div className="flex flex-col gap-4">
         {games.map((game, index) => {
+          if (!game) return null
+
           const statusIndicator = getStatusIndicator(game)
 
           return (
             <motion.div
               key={game.id}
               className={`relative flex cursor-pointer gap-4 rounded-lg p-3 ${
-                index === activeIndex ? "bg-purple-900/50" : "bg-gray-800/50 hover:bg-gray-800"
+                index === safeActiveIndex ? "bg-purple-900/50" : "bg-gray-800/50 hover:bg-gray-800"
               }`}
               onClick={() => setActiveIndex(index)}
               whileHover={{ x: 5 }}

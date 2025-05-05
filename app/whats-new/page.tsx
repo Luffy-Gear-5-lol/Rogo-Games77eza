@@ -17,13 +17,13 @@ export default function WhatsNewPage() {
 
       <div className="space-y-8">
         {/* May 2025 Updates */}
-        <Card>
+        <Card className="bg-gradient-to-r from-purple-900 to-indigo-900 border-gray-700">
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>May 2025 Updates</CardTitle>
-              <Badge>Latest</Badge>
+              <Badge className="bg-pink-600">Latest</Badge>
             </div>
-            <CardDescription>Major site improvements and new features</CardDescription>
+            <CardDescription className="text-gray-300">Major site improvements and new features</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -61,10 +61,10 @@ export default function WhatsNewPage() {
         </Card>
 
         {/* April 2025 Updates */}
-        <Card>
+        <Card className="bg-gradient-to-r from-indigo-900 to-blue-900 border-gray-700">
           <CardHeader>
             <CardTitle>April 2025 Updates</CardTitle>
-            <CardDescription>Major improvements to game clarity and privacy</CardDescription>
+            <CardDescription className="text-gray-300">Major improvements to game clarity and privacy</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -95,10 +95,12 @@ export default function WhatsNewPage() {
         </Card>
 
         {/* March 2025 Updates */}
-        <Card>
+        <Card className="bg-gradient-to-r from-blue-900 to-cyan-900 border-gray-700">
           <CardHeader>
             <CardTitle>March 2025 Updates</CardTitle>
-            <CardDescription>Game loading improvements and poll system enhancements</CardDescription>
+            <CardDescription className="text-gray-300">
+              Game loading improvements and poll system enhancements
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -130,10 +132,10 @@ export default function WhatsNewPage() {
         </Card>
 
         {/* February 2025 Updates */}
-        <Card>
+        <Card className="bg-gradient-to-r from-cyan-900 to-teal-900 border-gray-700">
           <CardHeader>
             <CardTitle>February 2025 Updates</CardTitle>
-            <CardDescription>Poll scheduling and UI improvements</CardDescription>
+            <CardDescription className="text-gray-300">Poll scheduling and UI improvements</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -157,10 +159,10 @@ export default function WhatsNewPage() {
         </Card>
 
         {/* January 2025 Updates */}
-        <Card>
+        <Card className="bg-gradient-to-r from-teal-900 to-green-900 border-gray-700">
           <CardHeader>
             <CardTitle>January 2025 Updates</CardTitle>
-            <CardDescription>Major feature additions and UI improvements</CardDescription>
+            <CardDescription className="text-gray-300">Major feature additions and UI improvements</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -194,10 +196,10 @@ export default function WhatsNewPage() {
         </Card>
 
         {/* Site Launch */}
-        <Card>
+        <Card className="bg-gradient-to-r from-green-900 to-emerald-900 border-gray-700">
           <CardHeader>
             <CardTitle>Site Launch</CardTitle>
-            <CardDescription>Welcome to Rogo Games!</CardDescription>
+            <CardDescription className="text-gray-300">Welcome to Rogo Games!</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
