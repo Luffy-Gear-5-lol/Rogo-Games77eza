@@ -1,16 +1,18 @@
 export interface Game {
   id: number
   title: string
-  slug: string
   description: string
-  image: string
-  categories: string[] // Changed from single category to array of categories
+  image?: string
+  controls?: string
+  playUrl?: string
   featured?: boolean
   popular?: boolean
-  new?: boolean
-  series?: string
-  playUrl: string
-  controls: string
-  views?: number
+  categories?: string[]
   isWorking?: boolean
+  views?: number
+  dateAdded?: string // ISO date string when the game was added
+  series?: string
+  slug?: string
+  languages?: string[] // Programming languages used in game
+  comingSoon?: boolean // Whether the game is coming soon
 }

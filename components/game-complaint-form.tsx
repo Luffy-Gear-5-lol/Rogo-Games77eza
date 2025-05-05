@@ -4,10 +4,11 @@ import type React from "react"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { submitGameComplaint } from "@/actions/complaint-actions"
-import { AlertCircle } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { CheckCircle } from "lucide-react"
 
 interface GameComplaintFormProps {
   gameId: number
@@ -16,104 +17,166 @@ interface GameComplaintFormProps {
 }
 
 export default function GameComplaintForm({ gameId, gameTitle, onClose }: GameComplaintFormProps) {
-  const [description, setDescription] = useState("")
+  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [issueType, setIssueType] = useState("")
+  const [description, setDescription] = useState("")
+  const [browserInfo, setBrowserInfo] = useState("")
   const [isSubmitted, setIsSubmitted] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // List of programming languages for the compatibility section
+  const programmingLanguages = [
+    "JavaScript",
+    "HTML5",
+    "ActionScript",
+    "Unity WebGL",
+    "Java",
+    "C#",
+    "Python",
+    "TypeScript",
+    "Other",
+  ]
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!description.trim()) {
-      setError("Please describe the issue with the game")
-      return
-    }
-
     setIsSubmitting(true)
-    setError(null)
 
-    try {
-      const success = await submitGameComplaint(gameId, description, email)
+    // Simulate form submission
+    await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      if (success) {
-        setIsSubmitted(true)
-      } else {
-        setError("Failed to submit complaint. Please try again.")
-      }
-    } catch (err) {
-      setError("An unexpected error occurred. Please try again.")
-    } finally {
-      setIsSubmitting(false)
-    }
+    // In a real app, you would send this data to your server
+    console.log({
+      gameId,
+      gameTitle,
+      name,
+      email,
+      issueType,
+      description,
+      browserInfo,
+      submittedAt: new Date().toISOString(),
+    })
+
+    setIsSubmitted(true)
+    setIsSubmitting(false)
   }
 
   if (isSubmitted) {
     return (
-      <div className="p-6 bg-gray-800 rounded-lg">
-        <div className="text-center mb-4">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-green-900 mb-4">
-            <svg className="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
+      <div className="rounded-lg bg-gray-800 p-6 text-center">
+        <div className="mb-4 flex justify-center">
+          <div className="rounded-full bg-green-500/20 p-3">
+            <CheckCircle className="h-8 w-8 text-green-500" />
           </div>
-          <h3 className="text-xl font-bold mb-2">Thank You!</h3>
-          <p className="text-gray-300">
-            Your complaint about {gameTitle} has been submitted. We'll look into the issue as soon as possible.
-          </p>
         </div>
-        <Button onClick={onClose} className="w-full">
-          Close
-        </Button>
+        <h2 className="mb-2 text-xl font-bold">Thank You!</h2>
+        <p className="mb-6 text-gray-400">
+          Your report has been submitted. We appreciate your feedback and will review the issue as soon as possible.
+        </p>
+        <Button onClick={onClose}>Close</Button>
       </div>
     )
   }
 
   return (
-    <div className="p-6 bg-gray-800 rounded-lg">
-      <h3 className="text-xl font-bold mb-4">Report an Issue with {gameTitle}</h3>
+    <div className="rounded-lg bg-gray-800 p-6">
+      <h2 className="mb-2 text-xl font-bold">Report an Issue</h2>
+      <p className="mb-6 text-gray-400">Help us improve {gameTitle} by reporting any issues you encounter.</p>
 
-      {error && (
-        <div className="mb-4 p-3 bg-red-900/30 border border-red-800 rounded-md flex items-start">
-          <AlertCircle className="h-5 w-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-red-300">{error}</p>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label htmlFor="description" className="block text-sm font-medium mb-1">
-            Describe the issue
-          </label>
-          <Textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="What's wrong with the game? Is it not loading, showing errors, or something else?"
-            className="bg-gray-700 border-gray-600 min-h-[100px]"
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid gap-2">
+          <Label htmlFor="name">Name</Label>
+          <Input
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="bg-gray-700 border-gray-600"
+            required
           />
         </div>
 
-        <div className="mb-6">
-          <label htmlFor="email" className="block text-sm font-medium mb-1">
-            Your email (optional)
-          </label>
+        <div className="grid gap-2">
+          <Label htmlFor="email">Email</Label>
           <Input
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="We'll notify you when it's fixed"
             className="bg-gray-700 border-gray-600"
+            required
           />
         </div>
 
-        <div className="flex gap-3">
-          <Button type="submit" disabled={isSubmitting} className="flex-1 bg-red-600 hover:bg-red-700">
-            {isSubmitting ? "Submitting..." : "Submit Report"}
-          </Button>
-          <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+        <div className="grid gap-2">
+          <Label htmlFor="issueType">Issue Type</Label>
+          <Select value={issueType} onValueChange={setIssueType} required>
+            <SelectTrigger className="bg-gray-700 border-gray-600">
+              <SelectValue placeholder="Select issue type" />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-800 border-gray-700">
+              <SelectItem value="game_not_loading">Game Not Loading</SelectItem>
+              <SelectItem value="game_freezing">Game Freezing or Crashing</SelectItem>
+              <SelectItem value="controls_not_working">Controls Not Working</SelectItem>
+              <SelectItem value="audio_issues">Audio Issues</SelectItem>
+              <SelectItem value="visual_bugs">Visual Bugs</SelectItem>
+              <SelectItem value="gameplay_issues">Gameplay Issues</SelectItem>
+              <SelectItem value="compatibility">Compatibility Issues</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {issueType === "compatibility" && (
+          <div className="grid gap-2">
+            <Label htmlFor="programmingLanguage">Related Programming Language</Label>
+            <Select onValueChange={(val) => setBrowserInfo((prev) => `${prev} - Language: ${val}`)}>
+              <SelectTrigger className="bg-gray-700 border-gray-600">
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-800 border-gray-700">
+                {programmingLanguages.map((lang) => (
+                  <SelectItem key={lang} value={lang}>
+                    {lang}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-gray-400">
+              Our games support multiple programming languages including Java, JavaScript, HTML, Rust, Ruby, Lua, Haxe,
+              C, C++, C#, Python, TypeScript, CSS, PHP, Go, Swift, and ActionScript.
+            </p>
+          </div>
+        )}
+
+        <div className="grid gap-2">
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="min-h-[100px] bg-gray-700 border-gray-600"
+            placeholder="Please describe the issue in detail..."
+            required
+          />
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="browserInfo">Browser & Device Information</Label>
+          <Input
+            id="browserInfo"
+            value={browserInfo}
+            onChange={(e) => setBrowserInfo(e.target.value)}
+            className="bg-gray-700 border-gray-600"
+            placeholder="e.g. Chrome 98 on Windows 10"
+          />
+        </div>
+
+        <div className="flex gap-2 justify-end">
+          <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>
             Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Submitting..." : "Submit Report"}
           </Button>
         </div>
       </form>

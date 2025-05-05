@@ -21,6 +21,7 @@ import { incrementGameView } from "@/actions/game-actions"
 import { isAdmin } from "@/utils/admin-utils"
 import GameComplaintForm from "@/components/game-complaint-form"
 import { GameLoading } from "@/components/game-loading"
+import GameLanguages from "@/components/game-languages"
 
 interface GamePlayProps {
   params: {
@@ -274,6 +275,8 @@ export default function GamePlay({ params }: GamePlayProps) {
                 </div>
               </div>
             )}
+
+            {game.languages && game.languages.length > 0 && <GameLanguages languages={game.languages} />}
 
             <div className="mt-8">
               <h3 className="mb-4 text-xl font-bold">How to Play</h3>

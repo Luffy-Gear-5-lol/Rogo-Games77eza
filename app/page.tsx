@@ -5,10 +5,24 @@ import { Button } from "@/components/ui/button"
 import FeaturedGames from "@/components/featured-games"
 import GameGrid from "@/components/game-grid"
 import CategoryFilter from "@/components/category-filter"
+import LanguageCompatibility from "@/components/language-compatibility"
 import { games } from "@/data/games"
 import { sortGames } from "@/utils/sort-utils"
 
 export default function HomePage() {
+  // At the beginning, after getting games, identify recently added games
+  const currentDate = new Date()
+  const sevenDaysAgo = new Date(currentDate.setDate(currentDate.getDate() - 7))
+
+  // Get recent games (last 12 added)
+  const recentGames = [...games]
+    .filter((game) => game.dateAdded)
+    .sort((a, b) => new Date(b.dateAdded!).getTime() - new Date(a.dateAdded!).getTime())
+    .slice(0, 12)
+
+  // Get coming soon games
+  const comingSoonGames = games.filter((game) => game.comingSoon)
+
   // Get featured games
   const featuredGames = games.filter((game) => game.featured)
 
@@ -27,9 +41,6 @@ export default function HomePage() {
 
   // Sort all games numerically and then alphabetically
   const sortedGames = sortGames(games)
-
-  // Get recent games (last 12 added)
-  const recentGames = [...games].sort((a, b) => b.id - a.id).slice(0, 12)
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
@@ -85,7 +96,7 @@ export default function HomePage() {
           <div className="mb-6">
             <h2 className="text-2xl font-bold">Recently Added</h2>
           </div>
-          <GameGrid games={recentGames} />
+          <GameGrid games={recentGames} showNewBadge={true} />
         </div>
 
         <div className="mt-12">
@@ -95,6 +106,18 @@ export default function HomePage() {
           </div>
           <GameGrid games={sortedGames} />
         </div>
+
+        {comingSoonGames.length > 0 && (
+          <div className="mt-12">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold">Coming Soon</h2>
+              <p className="text-gray-400 mt-1">Stay tuned for these upcoming games!</p>
+            </div>
+            <GameGrid games={comingSoonGames} />
+          </div>
+        )}
+
+        <LanguageCompatibility />
 
         {/* Skip Ad Button */}
         <div className="fixed bottom-4 left-4 z-10">

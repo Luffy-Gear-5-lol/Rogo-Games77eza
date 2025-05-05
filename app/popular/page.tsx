@@ -44,7 +44,7 @@ async function PopularGamesContent() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold flex items-center">
           <Flame className="mr-2 h-6 w-6 text-orange-500" />
-          Popular Games
+          Fire Popular Games
         </h1>
         <p className="mt-2 text-gray-400">The most played games on Rogo Games in the last 2 weeks</p>
         {showViewCounts && (

@@ -7,11 +7,14 @@ import { Badge } from "@/components/ui/badge"
 import { isAdmin } from "@/utils/admin-utils"
 import type { Game } from "@/types/game"
 
+// Update the GameCardProps interface to include an isNew property
 interface GameCardProps {
   game: Game
+  isNew?: boolean
 }
 
-export default function GameCard({ game }: GameCardProps) {
+// Update the function signature to include the isNew prop with a default value of false
+export default function GameCard({ game, isNew = false }: GameCardProps) {
   // Determine the link based on whether it's a Papa's game
   const gameLink = game.series === "papas" ? "/series/papas" : `/games/${game.slug}`
   const showViewCount = isAdmin() && game.views !== undefined
@@ -50,6 +53,11 @@ export default function GameCard({ game }: GameCardProps) {
         {game.popular && (
           <div className="absolute top-2 left-2 bg-red-500 text-white rounded-full px-3 py-1 text-xs font-bold z-10">
             Popular
+          </div>
+        )}
+        {isNew && (
+          <div className="absolute top-2 left-2 bg-purple-600 text-white rounded-full px-3 py-1 text-xs font-bold z-10">
+            New
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 transition-opacity hover:opacity-100">
