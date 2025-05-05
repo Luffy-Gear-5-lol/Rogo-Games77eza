@@ -102,80 +102,105 @@ function getNextMondayAt7AM(): Date {
 
 // Initialize the polls file if it doesn't exist
 const initPollsFile = () => {
-  if (!fs.existsSync(path.dirname(pollsFilePath))) {
-    fs.mkdirSync(path.dirname(pollsFilePath), { recursive: true })
-  }
+  try {
+    if (!fs.existsSync(path.dirname(pollsFilePath))) {
+      fs.mkdirSync(path.dirname(pollsFilePath), { recursive: true })
+    }
 
-  if (!fs.existsSync(pollsFilePath)) {
-    const initialPoll = createNewPoll()
-    fs.writeFileSync(pollsFilePath, JSON.stringify({ polls: [initialPoll] }, null, 2))
-    return { polls: [initialPoll] }
-  }
+    if (!fs.existsSync(pollsFilePath)) {
+      const initialPoll = createNewPoll()
+      fs.writeFileSync(pollsFilePath, JSON.stringify({ polls: [initialPoll] }, null, 2))
+      return { polls: [initialPoll] }
+    }
 
-  const pollsData = JSON.parse(fs.readFileSync(pollsFilePath, "utf-8"))
+    const pollsData = JSON.parse(fs.readFileSync(pollsFilePath, "utf-8"))
 
-  // Check if the current poll has expired
-  const currentPoll = pollsData.polls[0]
-  if (currentPoll) {
-    const expirationDate = new Date(currentPoll.expiresAt)
-    const now = new Date()
+    // Check if the current poll has expired
+    const currentPoll = pollsData.polls[0]
+    if (currentPoll) {
+      const expirationDate = new Date(currentPoll.expiresAt)
+      const now = new Date()
 
-    if (now >= expirationDate) {
-      // Current poll has expired, create a new one
-      const newPoll = createNewPoll()
-      pollsData.polls.unshift(newPoll)
+      if (now >= expirationDate) {
+        // Current poll has expired, create a new one
+        const newPoll = createNewPoll()
+        pollsData.polls.unshift(newPoll)
 
-      // Keep only the last 10 polls
-      if (pollsData.polls.length > 10) {
-        pollsData.polls = pollsData.polls.slice(0, 10)
+        // Keep only the last 10 polls
+        if (pollsData.polls.length > 10) {
+          pollsData.polls = pollsData.polls.slice(0, 10)
+        }
+
+        fs.writeFileSync(pollsFilePath, JSON.stringify(pollsData, null, 2))
       }
+    }
 
-      fs.writeFileSync(pollsFilePath, JSON.stringify(pollsData, null, 2))
+    return pollsData
+  } catch (error) {
+    console.error("Error initializing polls file:", error)
+    // Return a default structure with a fallback poll
+    return {
+      polls: [createNewPoll()],
     }
   }
-
-  return pollsData
 }
 
 // Create a new poll with a random question
 function createNewPoll(): Poll {
-  // Use a different question than the previous poll if possible
-  const previousPolls = fs.existsSync(pollsFilePath) ? JSON.parse(fs.readFileSync(pollsFilePath, "utf-8")).polls : []
+  try {
+    // Use a different question than the previous poll if possible
+    const previousPolls = fs.existsSync(pollsFilePath) ? JSON.parse(fs.readFileSync(pollsFilePath, "utf-8")).polls : []
 
-  let randomIndex = Math.floor(Math.random() * pollQuestions.length)
+    let randomIndex = Math.floor(Math.random() * pollQuestions.length)
 
-  // Try to avoid repeating the most recent question if there are multiple options
-  if (previousPolls.length > 0 && pollQuestions.length > 1) {
-    const lastQuestion = previousPolls[0].question
-    let attempts = 0
+    // Try to avoid repeating the most recent question if there are multiple options
+    if (previousPolls.length > 0 && pollQuestions.length > 1) {
+      const lastQuestion = previousPolls[0].question
+      let attempts = 0
 
-    while (pollQuestions[randomIndex].question === lastQuestion && attempts < 5) {
-      randomIndex = Math.floor(Math.random() * pollQuestions.length)
-      attempts++
+      while (pollQuestions[randomIndex].question === lastQuestion && attempts < 5) {
+        randomIndex = Math.floor(Math.random() * pollQuestions.length)
+        attempts++
+      }
     }
-  }
 
-  const { question, options } = pollQuestions[randomIndex]
+    const { question, options } = pollQuestions[randomIndex]
 
-  // Set expiration to next Monday at 6:30 AM
-  const expiresAt = getNextMondayAt630AM()
+    // Set expiration to next Monday at 6:30 AM
+    const expiresAt = getNextMondayAt630AM()
 
-  // Set creation time to current time, or if a new poll is scheduled,
-  // set it to next Monday at 7:00 AM
-  const now = new Date()
-  const nextMondayAt7AM = getNextMondayAt7AM()
-  const createdAt = now < expiresAt ? now : nextMondayAt7AM
+    // Set creation time to current time, or if a new poll is scheduled,
+    // set it to next Monday at 7:00 AM
+    const now = new Date()
+    const nextMondayAt7AM = getNextMondayAt7AM()
+    const createdAt = now < expiresAt ? now : nextMondayAt7AM
 
-  return {
-    id: uuidv4(),
-    question,
-    options: options.map((text) => ({
+    return {
       id: uuidv4(),
-      text,
-      votes: 0, // Always start with zero votes
-    })),
-    createdAt: createdAt.toISOString(),
-    expiresAt: expiresAt.toISOString(),
+      question,
+      options: options.map((text) => ({
+        id: uuidv4(),
+        text,
+        votes: 0, // Always start with zero votes
+      })),
+      createdAt: createdAt.toISOString(),
+      expiresAt: expiresAt.toISOString(),
+    }
+  } catch (error) {
+    console.error("Error creating new poll:", error)
+    // Return a fallback poll
+    return {
+      id: uuidv4(),
+      question: "What's your favorite game on our site?",
+      options: [
+        { id: uuidv4(), text: "Flappy Bird", votes: 0 },
+        { id: uuidv4(), text: "Minecraft", votes: 0 },
+        { id: uuidv4(), text: "Among Us", votes: 0 },
+        { id: uuidv4(), text: "FNAF", votes: 0 },
+      ],
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+    }
   }
 }
 

@@ -14,29 +14,42 @@ interface PollComponentProps {
 }
 
 export default function PollComponent({ poll, voteAction }: PollComponentProps) {
+  // Safety check - if poll is undefined or doesn't have options, show a fallback
+  if (!poll || !poll.options || !Array.isArray(poll.options)) {
+    return (
+      <div className="rounded-lg bg-gray-800 p-6 text-center">
+        <p>Sorry, the poll data is currently unavailable. Please try again later.</p>
+      </div>
+    )
+  }
+
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   const [hasVoted, setHasVoted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const showResults = isAdmin() // Only admins can see results
 
   // Calculate total votes
-  const totalVotes = poll.options.reduce((sum, option) => sum + option.votes, 0)
+  const totalVotes = poll.options.reduce((sum, option) => sum + (option.votes || 0), 0)
 
   // Format the poll end date
   const formatEndDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString(undefined, {
-      weekday: "long",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    })
+    try {
+      const date = new Date(dateString)
+      return date.toLocaleDateString(undefined, {
+        weekday: "long",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+    } catch (error) {
+      return "Date unavailable"
+    }
   }
 
   const handleVote = async () => {
-    if (!selectedOption) return
+    if (!selectedOption || !poll.id) return
 
     setIsSubmitting(true)
     const success = await voteAction(poll.id, selectedOption)
@@ -51,9 +64,11 @@ export default function PollComponent({ poll, voteAction }: PollComponentProps) 
     <div className="rounded-lg bg-gray-800 p-6">
       <div className="mb-6">
         <h2 className="text-2xl font-bold mb-2">{poll.question}</h2>
-        <p className="text-sm text-gray-400 flex items-center">
-          <Calendar className="mr-1 h-3 w-3" /> Poll ends: {formatEndDate(poll.expiresAt)}
-        </p>
+        {poll.expiresAt && (
+          <p className="text-sm text-gray-400 flex items-center">
+            <Calendar className="mr-1 h-3 w-3" /> Poll ends: {formatEndDate(poll.expiresAt)}
+          </p>
+        )}
       </div>
 
       {!hasVoted ? (
@@ -84,14 +99,14 @@ export default function PollComponent({ poll, voteAction }: PollComponentProps) 
               <p className="font-medium text-center mb-4">Thanks for voting! Here are the current results:</p>
 
               {poll.options.map((option) => {
-                const percentage = totalVotes > 0 ? Math.round((option.votes / totalVotes) * 100) : 0
+                const percentage = totalVotes > 0 ? Math.round(((option.votes || 0) / totalVotes) * 100) : 0
 
                 return (
                   <div key={option.id} className="space-y-1">
                     <div className="flex justify-between text-sm">
                       <span>{option.text}</span>
                       <span>
-                        {option.votes} vote{option.votes !== 1 ? "s" : ""} ({percentage}%)
+                        {option.votes || 0} vote{(option.votes || 0) !== 1 ? "s" : ""} ({percentage}%)
                       </span>
                     </div>
                     <div className="h-2 w-full bg-gray-700 rounded-full overflow-hidden">
