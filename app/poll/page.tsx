@@ -1,59 +1,77 @@
-import { Suspense } from "react"
+import PollComponent from "@/components/poll-component"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
-import { getCurrentPoll, voteOnPoll } from "@/actions/poll-actions"
-import PollComponent from "@/components/poll-component"
-
-async function PollContent() {
-  const currentPoll = await getCurrentPoll()
-
-  if (!currentPoll) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-400">No active polls at the moment. Check back soon!</p>
-      </div>
-    )
-  }
-
-  return <PollComponent poll={currentPoll} voteAction={voteOnPoll} />
-}
 
 export default function PollPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
-      <div className="container mx-auto px-4 py-8">
-        <Link href="/" className="inline-flex items-center mb-8 text-gray-400 hover:text-white">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Home
-        </Link>
+    <div className="container mx-auto py-8 px-4">
+      <Link href="/" className="inline-flex items-center mb-8 text-gray-400 hover:text-white">
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back to Home
+      </Link>
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Weekly Poll</h1>
-          <p className="mt-2 text-gray-400">Share your opinion and see what other players think</p>
-        </div>
+      <h1 className="text-4xl font-bold mb-6">Weekly Poll</h1>
+      <p className="text-lg mb-8">Vote in our weekly gaming poll and see what other players think! 📊</p>
 
-        <div className="max-w-2xl mx-auto">
-          <Suspense
-            fallback={
-              <div className="flex justify-center items-center py-20">
-                <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
+      <div className="max-w-2xl mx-auto">
+        <Card className="bg-gray-800 border-gray-700">
+          <CardHeader>
+            <CardTitle>This Week's Question</CardTitle>
+            <CardDescription className="text-gray-400">Poll ends Monday at 6:30 AM</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PollComponent />
+          </CardContent>
+        </Card>
+
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold mb-4">Previous Poll Results</h2>
+          <Card className="bg-gray-800 border-gray-700 mb-4">
+            <CardHeader>
+              <CardTitle className="text-lg">What's your favorite game genre?</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span>Action/Adventure</span>
+                    <span>42%</span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-2.5">
+                    <div className="bg-purple-600 h-2.5 rounded-full" style={{ width: "42%" }}></div>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span>Puzzle</span>
+                    <span>18%</span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-2.5">
+                    <div className="bg-purple-600 h-2.5 rounded-full" style={{ width: "18%" }}></div>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span>Platformer</span>
+                    <span>24%</span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-2.5">
+                    <div className="bg-purple-600 h-2.5 rounded-full" style={{ width: "24%" }}></div>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span>Racing</span>
+                    <span>16%</span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-2.5">
+                    <div className="bg-purple-600 h-2.5 rounded-full" style={{ width: "16%" }}></div>
+                  </div>
+                </div>
               </div>
-            }
-          >
-            <PollContent />
-          </Suspense>
-        </div>
-
-        <div className="mt-12 max-w-2xl mx-auto rounded-lg bg-gray-800 p-6">
-          <h2 className="text-xl font-bold mb-4">About Our Weekly Polls</h2>
-          <p className="text-gray-300 mb-4">
-            Every week, we post a new poll to gather feedback from our gaming community. Your responses help us improve
-            the site and understand what our players enjoy most.
-          </p>
-          <p className="text-gray-300">
-            Polls are completely anonymous and the results are used to guide our decisions about new features, game
-            selections, and site improvements. Check back each week for a new question!
-          </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

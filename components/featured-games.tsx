@@ -2,107 +2,112 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { motion } from "framer-motion"
-import { Play, Eye, CheckCircle, XCircle, AlertCircle } from "lucide-react"
-import { isAdmin } from "@/utils/admin-utils"
+import Image from "next/image"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import type { Game } from "@/types/game"
 
 interface FeaturedGamesProps {
   games: Game[]
 }
 
-export default function FeaturedGames({ games }: FeaturedGamesProps) {
+export default function FeaturedGames({ games = [] }: FeaturedGamesProps) {
   const [activeIndex, setActiveIndex] = useState(0)
-  const activeGame = games[activeIndex]
-  const showViewCounts = isAdmin()
 
-  // Function to get status indicator
-  const getStatusIndicator = (game: Game) => {
-    if (game.isWorking === undefined) {
-      return { color: "text-white", icon: <AlertCircle className="h-3 w-3 mr-1" /> }
-    } else if (game.isWorking) {
-      return { color: "text-green-400", icon: <CheckCircle className="h-3 w-3 mr-1" /> }
-    } else {
-      return { color: "text-red-400", icon: <XCircle className="h-3 w-3 mr-1" /> }
-    }
+  // Safety check - if no games are provided, don't render anything
+  if (!games || games.length === 0) {
+    return null
+  }
+
+  const activeGame = games[activeIndex] || games[0]
+
+  const nextSlide = () => {
+    setActiveIndex((prev) => (prev + 1) % games.length)
+  }
+
+  const prevSlide = () => {
+    setActiveIndex((prev) => (prev - 1 + games.length) % games.length)
   }
 
   return (
-    <div className="grid gap-6 md:grid-cols-3">
-      <div className="md:col-span-2">
-        <div className="relative aspect-video overflow-hidden rounded-xl">
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10" />
-
-          {/* View count badge - only for admins */}
-          {showViewCounts && activeGame.views !== undefined && (
-            <div className="absolute top-2 right-2 bg-black/60 rounded-full px-2 py-1 text-xs flex items-center z-20">
-              <Eye className="h-3 w-3 mr-1" />
-              {activeGame.views.toLocaleString()}
-            </div>
+    <div className="mb-12 relative">
+      <h2 className="text-2xl font-bold mb-6">Featured Games</h2>
+      <div className="relative h-[400px] rounded-xl overflow-hidden">
+        {/* Background image with gradient overlay */}
+        <div className="absolute inset-0 z-0">
+          {activeGame && activeGame.image && (
+            <Image
+              src={activeGame.image || "/placeholder.svg"}
+              alt={activeGame.title}
+              fill
+              className="object-cover opacity-30"
+              priority
+            />
           )}
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent" />
+        </div>
 
-          {/* Status indicator */}
-          {activeGame && (
-            <div
-              className={`absolute top-2 left-2 bg-black/60 rounded-full px-2 py-1 text-xs flex items-center z-20 ${getStatusIndicator(activeGame).color}`}
-            >
-              {getStatusIndicator(activeGame).icon}
-              {activeGame.isWorking === undefined ? "Status Unknown" : activeGame.isWorking ? "Working" : "Not Working"}
-            </div>
-          )}
-
-          {/* Placeholder gradient background - will be replaced with actual image */}
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-800 to-indigo-900" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-3xl font-bold z-5">{activeGame.title}</span>
-          </div>
-
-          <div className="absolute inset-0 z-20 flex flex-col justify-end p-6">
-            <h3 className="mb-2 text-2xl font-bold">{activeGame.title}</h3>
-            <p className="mb-4 text-sm text-gray-300 line-clamp-2">{activeGame.description}</p>
-            <Link
-              href={`/game/${activeGame.id}`}
-              className="flex w-fit items-center gap-2 rounded-full bg-purple-600 px-4 py-2 font-medium transition-colors hover:bg-purple-700"
-            >
-              <Play className="h-4 w-4 fill-current" /> Play Now
+        {/* Content */}
+        <div className="relative z-10 h-full flex flex-col md:flex-row items-center justify-between p-6">
+          <div className="md:w-1/2 text-center md:text-left mb-6 md:mb-0">
+            <h3 className="text-3xl md:text-4xl font-bold mb-4">{activeGame?.title || "Featured Game"}</h3>
+            <p className="text-gray-300 mb-6 line-clamp-3">{activeGame?.description || "Game description"}</p>
+            <Link href={`/game/${activeGame?.id || 1}`}>
+              <Button size="lg" className="bg-purple-600 hover:bg-purple-700">
+                Play Now
+              </Button>
             </Link>
           </div>
-        </div>
-      </div>
-      <div className="flex flex-col gap-4">
-        {games.map((game, index) => {
-          const statusIndicator = getStatusIndicator(game)
 
-          return (
-            <motion.div
-              key={game.id}
-              className={`relative flex cursor-pointer gap-4 rounded-lg p-3 ${
-                index === activeIndex ? "bg-purple-900/50" : "bg-gray-800/50 hover:bg-gray-800"
-              }`}
-              onClick={() => setActiveIndex(index)}
-              whileHover={{ x: 5 }}
+          <div className="md:w-1/3 relative h-[200px] md:h-[300px] w-full md:w-[300px]">
+            {activeGame && activeGame.image && (
+              <Image
+                src={activeGame.image || "/placeholder.svg"}
+                alt={activeGame.title}
+                fill
+                className="object-contain rounded-lg"
+                priority
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Navigation arrows */}
+        {games.length > 1 && (
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 rounded-full z-20"
+              onClick={prevSlide}
             >
-              <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-gradient-to-br from-purple-700 to-indigo-800 flex items-center justify-center">
-                <span className="text-xs font-bold">{game.title.substring(0, 2)}</span>
-              </div>
-              <div className="flex flex-col justify-center">
-                <h4 className="font-medium">{game.title}</h4>
-                <div className="flex items-center text-xs">
-                  <span className={`flex items-center mr-2 ${statusIndicator.color}`}>{statusIndicator.icon}</span>
-                  {game.categories && game.categories.length > 0 && (
-                    <span className="text-gray-400">{game.categories[0]}</span>
-                  )}
-                  {showViewCounts && game.views !== undefined && (
-                    <div className="ml-2 flex items-center">
-                      <Eye className="h-3 w-3 mr-1" />
-                      {game.views.toLocaleString()}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          )
-        })}
+              <ChevronLeft className="h-6 w-6" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 rounded-full z-20"
+              onClick={nextSlide}
+            >
+              <ChevronRight className="h-6 w-6" />
+            </Button>
+          </>
+        )}
+
+        {/* Indicators */}
+        {games.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-20">
+            {games.map((_, index) => (
+              <button
+                key={index}
+                className={`w-2 h-2 rounded-full ${
+                  index === activeIndex ? "bg-white" : "bg-gray-500"
+                } transition-colors`}
+                onClick={() => setActiveIndex(index)}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
