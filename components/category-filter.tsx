@@ -21,11 +21,16 @@ export default function CategoryFilter({
 
   // Get all unique categories from games
   const allCategories = new Set<string>()
-  games.forEach((game) => {
-    if (game.categories) {
-      game.categories.forEach((category) => allCategories.add(category))
-    }
-  })
+
+  if (games && Array.isArray(games)) {
+    games.forEach((game) => {
+      if (game && game.categories && Array.isArray(game.categories)) {
+        game.categories.forEach((category) => {
+          if (category) allCategories.add(category)
+        })
+      }
+    })
+  }
 
   // Convert to array and sort alphabetically
   const categories = Array.from(allCategories).sort()
@@ -52,7 +57,7 @@ export default function CategoryFilter({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="justify-between bg-gray-800 border-gray-700 text-white hover:bg-gray-700 hover:text-white w-full md:w-[200px]"
+          className="justify-between bg-gray-800 border-gray-700 text-white hover:bg-gray-700 hover:text-white w-full md:w-[200px] mb-4"
         >
           {selectedCategory ? selectedCategory : "All Categories"}
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
