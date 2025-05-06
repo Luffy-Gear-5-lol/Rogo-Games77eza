@@ -15,3 +15,6 @@ export function ThemeToggle() {
     </Button>
   )
 }
+
+// Add default export to fix deployment error
+export default ThemeToggle
