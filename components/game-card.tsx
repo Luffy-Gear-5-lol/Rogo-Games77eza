@@ -1,83 +1,99 @@
-import Link from "next/link"
 import Image from "next/image"
-import { CheckCircle, XCircle } from "lucide-react"
+import Link from "next/link"
+import { Play, Eye, CheckCircle, XCircle, AlertCircle } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { isAdmin } from "@/utils/admin-utils"
 import type { Game } from "@/types/game"
-import LanguageBadge from "./language-badge"
 
+// Update the GameCardProps interface to include an isNew property
 interface GameCardProps {
   game: Game
-  showNewBadge?: boolean
+  isNew?: boolean
 }
 
-export default function GameCard({ game, showNewBadge = false }: GameCardProps) {
-  // Check if the game is new (added in the last 7 days)
-  const isNew = () => {
-    if (!game.dateAdded) return false
-    const addedDate = new Date(game.dateAdded)
-    const currentDate = new Date()
-    const diffTime = Math.abs(currentDate.getTime() - addedDate.getTime())
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays <= 7
+// Update the function signature to include the isNew prop with a default value of false
+export default function GameCard({ game, isNew = false }: GameCardProps) {
+  // Determine the link based on whether it's a Papa's game
+  const gameLink = game.series === "papas" ? "/series/papas" : `/games/${game.slug}`
+  const showViewCount = isAdmin() && game.views !== undefined
+
+  // Determine status color and icon
+  const getStatusIndicator = () => {
+    if (game.isWorking === undefined) {
+      return { color: "text-white", icon: <AlertCircle className="h-3 w-3 mr-1" /> }
+    } else if (game.isWorking) {
+      return { color: "text-green-400", icon: <CheckCircle className="h-3 w-3 mr-1" /> }
+    } else {
+      return { color: "text-red-400", icon: <XCircle className="h-3 w-3 mr-1" /> }
+    }
   }
 
-  // Get the primary language (first in the list)
-  const primaryLanguage = game.languages && game.languages.length > 0 ? game.languages[0] : null
+  const statusIndicator = getStatusIndicator()
+
+  // Use a default placeholder if no image is provided
+  const imageSrc = game.image || "/placeholder.svg?height=200&width=350"
 
   return (
-    <Link href={`/game/${game.id}`} className="group">
-      <div className="relative overflow-hidden rounded-lg bg-gray-800 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 hover:translate-y-[-5px]">
-        <div className="relative aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-purple-900 to-gray-900">
-          {game.imageUrl ? (
-            <Image
-              src={game.imageUrl || "/placeholder.svg"}
-              alt={game.title}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-cover transition-transform duration-300 group-hover:scale-110"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center">
-              <span className="text-2xl font-bold text-white/70">{game.title.substring(0, 2)}</span>
-            </div>
-          )}
-
-          {/* Status indicator */}
-          {game.isWorking === false && (
-            <div className="absolute top-2 right-2 rounded-full bg-black/60 p-1">
-              <XCircle className="h-5 w-5 text-red-500" />
-            </div>
-          )}
-
-          {/* New badge */}
-          {showNewBadge && isNew() && (
-            <div className="absolute top-2 left-2 bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-md">
-              NEW
-            </div>
-          )}
-
-          {/* Language badge */}
-          {primaryLanguage && (
-            <div className="absolute bottom-2 left-2">
-              <LanguageBadge language={primaryLanguage} />
-            </div>
-          )}
-        </div>
-
-        <div className="p-3">
-          <h3 className="font-bold text-white group-hover:text-purple-400">{game.title}</h3>
-          <div className="mt-1 flex items-center text-xs text-gray-400">
-            {game.categories && game.categories.length > 0 ? game.categories[0] : "Game"}
-            {game.isWorking !== false && (
-              <>
-                <span className="mx-1">•</span>
-                <span className="flex items-center text-green-400">
-                  <CheckCircle className="mr-1 h-3 w-3" /> Working
-                </span>
-              </>
+    <Card className="overflow-hidden bg-gray-800 border-gray-700 transition-all hover:shadow-lg hover:shadow-purple-500/20">
+      <div className="relative aspect-video overflow-hidden">
+        <Image
+          src={imageSrc || "/placeholder.svg"}
+          alt={game.title}
+          fill
+          className="object-cover transition-transform hover:scale-105"
+        />
+        {showViewCount && (
+          <div className="absolute top-2 right-2 bg-black/60 rounded-full px-2 py-1 text-xs flex items-center z-10">
+            <Eye className="h-3 w-3 mr-1" />
+            {game.views.toLocaleString()}
+          </div>
+        )}
+        {game.popular && (
+          <div className="absolute top-2 left-2 bg-red-500 text-white rounded-full px-3 py-1 text-xs font-bold z-10">
+            Popular
+          </div>
+        )}
+        {isNew && (
+          <div className="absolute top-2 left-2 bg-purple-600 text-white rounded-full px-3 py-1 text-xs font-bold z-10">
+            New
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 transition-opacity hover:opacity-100">
+          <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+            {game.categories && game.categories.length > 0 && (
+              <Badge variant="secondary" className="bg-purple-600 hover:bg-purple-700">
+                {game.categories[0]}
+              </Badge>
             )}
+            <Button size="sm" className="rounded-full bg-white text-black hover:bg-gray-200">
+              <Play className="h-4 w-4 fill-current" />
+            </Button>
           </div>
         </div>
       </div>
-    </Link>
+      <CardContent className="p-4">
+        <Link href={gameLink}>
+          <h3 className="mb-1 font-bold hover:text-purple-400">{game.title}</h3>
+        </Link>
+        <div className="flex items-center mb-2">
+          <span className={`text-xs flex items-center ${statusIndicator.color}`}>
+            {statusIndicator.icon}
+            {game.isWorking === undefined ? "Status Unknown" : game.isWorking ? "Working" : "Not Working"}
+          </span>
+        </div>
+        <p className="text-sm text-gray-400 line-clamp-2">{game.description}</p>
+        {game.categories && game.categories.length > 1 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {game.categories.slice(1).map((category) => (
+              <Badge key={category} variant="outline" className="text-xs">
+                {category}
+              </Badge>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }

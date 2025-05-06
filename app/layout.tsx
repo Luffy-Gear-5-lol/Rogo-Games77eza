@@ -21,7 +21,7 @@ export default function RootLayout({
       <body>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <SiteHeader />
-          <Suspense>{children}</Suspense>
+          <Suspense fallback={null}>{children}</Suspense>
           <Analytics />
         </ThemeProvider>
       </body>

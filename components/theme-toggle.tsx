@@ -16,5 +16,5 @@ export function ThemeToggle() {
   )
 }
 
-// Add default export to fix deployment error
+// Add default export to fix the warning
 export default ThemeToggle

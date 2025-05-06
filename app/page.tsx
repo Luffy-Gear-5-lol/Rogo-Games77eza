@@ -1,29 +1,14 @@
 import { Suspense } from "react"
 import Link from "next/link"
-import { ChevronRight, Flame, Gamepad2, Code } from "lucide-react"
+import { ChevronRight, Flame, Gamepad2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import FeaturedGames from "@/components/featured-games"
 import GameGrid from "@/components/game-grid"
 import CategoryFilter from "@/components/category-filter"
-import LanguageCompatibility from "@/components/language-compatibility"
-import LanguageFilter from "@/components/language-filter"
 import { games } from "@/data/games"
 import { sortGames } from "@/utils/sort-utils"
 
 export default function HomePage() {
-  // At the beginning, after getting games, identify recently added games
-  const currentDate = new Date()
-  const sevenDaysAgo = new Date(currentDate.setDate(currentDate.getDate() - 7))
-
-  // Get recent games (last 12 added)
-  const recentGames = [...games]
-    .filter((game) => game.dateAdded)
-    .sort((a, b) => new Date(b.dateAdded!).getTime() - new Date(a.dateAdded!).getTime())
-    .slice(0, 12)
-
-  // Get coming soon games
-  const comingSoonGames = games.filter((game) => game.comingSoon)
-
   // Get featured games
   const featuredGames = games.filter((game) => game.featured)
 
@@ -43,6 +28,9 @@ export default function HomePage() {
   // Sort all games numerically and then alphabetically
   const sortedGames = sortGames(games)
 
+  // Get recent games (last 12 added)
+  const recentGames = [...games].sort((a, b) => b.id - a.id).slice(0, 12)
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
       <div className="container mx-auto px-4 py-8">
@@ -55,23 +43,6 @@ export default function HomePage() {
         >
           <FeaturedGames games={featuredGames} />
         </Suspense>
-
-        {/* Language banner */}
-        <div className="mt-8 bg-gradient-to-r from-blue-900 to-purple-900 rounded-lg p-6 flex flex-col md:flex-row items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold mb-2 flex items-center">
-              <Code className="mr-2 h-5 w-5" />
-              Multi-Language Game Platform
-            </h2>
-            <p className="text-gray-200 max-w-2xl">
-              Our platform supports games built with Java, JavaScript, HTML, Shell, Rust, Ruby, Lua, Haxe, C, C++, C#,
-              Python, TypeScript, CSS, PHP, Go, Swift, ActionScript and more!
-            </p>
-          </div>
-          <Link href="/languages" className="mt-4 md:mt-0">
-            <Button className="bg-white text-purple-900 hover:bg-gray-200">Browse by Language</Button>
-          </Link>
-        </div>
 
         <div className="mt-12">
           <div className="mb-6 flex items-center justify-between">
@@ -86,14 +57,6 @@ export default function HomePage() {
             </Link>
           </div>
           <GameGrid games={sortGames(popularGames)} />
-        </div>
-
-        <div className="mt-12">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold">Filter by Programming Language</h2>
-            <p className="text-gray-400 mt-1">Find games built with your favorite technologies</p>
-          </div>
-          <LanguageFilter onFilterChange={(languages) => console.log("Selected languages:", languages)} />
         </div>
 
         <div className="mt-12">
@@ -122,7 +85,7 @@ export default function HomePage() {
           <div className="mb-6">
             <h2 className="text-2xl font-bold">Recently Added</h2>
           </div>
-          <GameGrid games={recentGames} showNewBadge={true} />
+          <GameGrid games={recentGames} />
         </div>
 
         <div className="mt-12">
@@ -132,18 +95,6 @@ export default function HomePage() {
           </div>
           <GameGrid games={sortedGames} />
         </div>
-
-        {comingSoonGames.length > 0 && (
-          <div className="mt-12">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold">Coming Soon</h2>
-              <p className="text-gray-400 mt-1">Stay tuned for these upcoming games!</p>
-            </div>
-            <GameGrid games={comingSoonGames} />
-          </div>
-        )}
-
-        <LanguageCompatibility />
 
         {/* Skip Ad Button */}
         <div className="fixed bottom-4 left-4 z-10">

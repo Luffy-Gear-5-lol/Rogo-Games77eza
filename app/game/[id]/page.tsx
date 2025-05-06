@@ -13,7 +13,6 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  Code,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -41,40 +40,6 @@ export default function GamePlay({ params }: GamePlayProps) {
   const [viewCount, setViewCount] = useState(0)
   const [showComplaintForm, setShowComplaintForm] = useState(false)
   const showViewCount = isAdmin()
-
-  // If game doesn't have languages, assign some based on the game ID
-  const getGameLanguages = () => {
-    if (game?.languages) return game.languages
-
-    // Assign languages based on game ID if not defined
-    const allLanguages = [
-      "JavaScript",
-      "HTML",
-      "Java",
-      "Python",
-      "C++",
-      "C#",
-      "TypeScript",
-      "Rust",
-      "Ruby",
-      "Lua",
-      "Haxe",
-      "C",
-      "CSS",
-      "PHP",
-      "Go",
-      "Swift",
-      "ActionScript",
-      "Shell",
-    ]
-
-    // Use game ID to deterministically select 1-3 languages
-    const numLanguages = (gameId % 3) + 1
-    const startIndex = gameId % (allLanguages.length - numLanguages)
-    return allLanguages.slice(startIndex, startIndex + numLanguages)
-  }
-
-  const gameLanguages = getGameLanguages()
 
   useEffect(() => {
     // Only show loading state after the play button is clicked
@@ -193,25 +158,11 @@ export default function GamePlay({ params }: GamePlayProps) {
           </div>
         </div>
 
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex items-center">
           <span className={`flex items-center ${statusIndicator.color}`}>
             {statusIndicator.icon}
             {statusIndicator.text}
           </span>
-
-          <div className="flex items-center">
-            <Code className="h-4 w-4 mr-1 text-blue-400" />
-            <span className="text-sm text-gray-300">Built with: </span>
-            <div className="flex ml-2 gap-1">
-              {gameLanguages.map((lang) => (
-                <Link key={lang} href={`/languages/${lang.toLowerCase()}`}>
-                  <Badge variant="outline" className="bg-gray-800 hover:bg-gray-700">
-                    {lang}
-                  </Badge>
-                </Link>
-              ))}
-            </div>
-          </div>
         </div>
 
         {!isGameWorking && (
@@ -325,7 +276,7 @@ export default function GamePlay({ params }: GamePlayProps) {
               </div>
             )}
 
-            <GameLanguages languages={gameLanguages} />
+            {game.languages && game.languages.length > 0 && <GameLanguages languages={game.languages} />}
 
             <div className="mt-8">
               <h3 className="mb-4 text-xl font-bold">How to Play</h3>

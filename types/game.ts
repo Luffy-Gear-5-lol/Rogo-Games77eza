@@ -2,17 +2,17 @@ export interface Game {
   id: number
   title: string
   description: string
-  imageUrl?: string
-  categories?: string[]
+  image?: string
+  controls?: string
+  playUrl?: string
   featured?: boolean
   popular?: boolean
-  playUrl?: string
-  controls: string
+  categories?: string[]
   isWorking?: boolean
-  dateAdded?: string
-  comingSoon?: boolean
-  languages?: string[]
-  languageIcons?: {
-    [key: string]: string
-  }
+  views?: number
+  dateAdded?: string // ISO date string when the game was added
+  series?: string
+  slug?: string
+  languages?: string[] // Programming languages used in game
+  comingSoon?: boolean // Whether the game is coming soon
 }
