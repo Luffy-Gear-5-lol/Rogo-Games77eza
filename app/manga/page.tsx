@@ -1,5 +1,6 @@
 import Link from "next/link"
-import { ArrowLeft, BookOpen } from "lucide-react"
+import Image from "next/image"
+import { ArrowLeft, BookOpen, Star } from "lucide-react"
 import { manga } from "@/data/games"
 import { sortGames } from "@/utils/sort-utils"
 
@@ -25,23 +26,32 @@ export default function MangaPage() {
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {sortedManga.map((item) => (
-            <div
+            <Link
               key={item.id}
-              className="overflow-hidden rounded-lg bg-gray-800 border border-gray-700 transition-all hover:shadow-lg hover:shadow-purple-500/20"
+              href={`/manga/${item.slug}`}
+              className="group overflow-hidden rounded-lg bg-gray-800 border border-gray-700 transition-all hover:shadow-lg hover:shadow-purple-500/20"
             >
               <div className="relative aspect-[2/3] overflow-hidden">
-                <img src={item.cover || item.image} alt={item.title} className="object-cover w-full h-full" />
-                <div className="absolute top-2 right-2 bg-black/60 rounded-full px-2 py-1 text-xs">★ {item.rating}</div>
+                <Image
+                  src={item.cover || item.image || "/placeholder.svg?height=450&width=300"}
+                  alt={item.title}
+                  fill
+                  className="object-cover transition-transform group-hover:scale-105"
+                />
+                <div className="absolute top-2 right-2 bg-black/60 rounded-full px-2 py-1 text-xs flex items-center">
+                  <Star className="h-3 w-3 text-yellow-500 mr-1" />
+                  {item.rating}
+                </div>
               </div>
               <div className="p-4">
-                <h3 className="mb-1 font-bold">{item.title}</h3>
+                <h3 className="mb-1 font-bold group-hover:text-purple-400 transition-colors">{item.title}</h3>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs text-gray-400">{item.chapters} chapters</span>
                   <span className="text-xs px-2 py-1 rounded bg-gray-700">{item.status}</span>
                 </div>
                 <p className="text-sm text-gray-400 line-clamp-2">{item.description}</p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
