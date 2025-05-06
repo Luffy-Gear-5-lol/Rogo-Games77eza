@@ -1514,7 +1514,7 @@ export const games: Game[] = [
     image: "/images/games/euro-cup.jpg",
     categories: ["Idle", "Miner", "Tournament"],
     playUrl: "https://09872.vercel.app/",
-    controls: "IIDDK.",
+    controls: "it is just a point-and-click game",
     isWorking: true,
   },
   {
@@ -1847,7 +1847,7 @@ export const games: Game[] = [
     image: "/images/games/bad-piggies.jpg",
     categories: ["Arcade", "Action"],
     playUrl: "https://seraph-eight-omega.vercel.app/games/supermariobros/index.html",
-    controls: "IDC ",
+    controls: "arrow keys for movement, A button for jumping, B button for running/accelerating, and the spacebar for the SELECT button",
     isWorking: true,
   },
   {
@@ -1859,7 +1859,7 @@ export const games: Game[] = [
     image: "/images/games/bad-piggies.jpg",
     categories: ["Arcade", "Action"],
     playUrl: "https://seraph-eight-omega.vercel.app/games/sm64ds/index.html",
-    controls: "IDC ",
+    controls: " Common mappings include WASD for movement, Spacebar for jump, and Ctrl or Shift for B-button actions (punch, throw). Mouse movements usually control the camera. ",
     isWorking: true,
   },
   {
