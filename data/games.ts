@@ -21,7 +21,7 @@ export const games: Game[] = [
     slug: "tetris",
     description:
       "The classic block-stacking puzzle game. Arrange falling tetrominoes to create and clear horizontal lines. As the game progresses, the blocks fall faster, challenging your reflexes and strategic thinking.",
-    image: "/images/games/tetris.jpg",
+    image: "file:///home/chronos/u-dff62d5527bd76855c3dbecedfa80721260cc148/MyFiles/Downloads/TaLfnqQU3Pz7J7qqrSkuBd.png",
     categories: ["Puzzle", "Classic"],
     popular: true,
     playUrl: "https://seraph-eight-omega.vercel.app/games/tetris/index.html",
