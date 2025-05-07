@@ -885,7 +885,7 @@ export const games: Game[] = [
     categories: ["Rhythm", "Music", "Crossover"],
     playUrl: "https://interstellar-steel-six.vercel.app/a/hvtrs8%2F-fwniyoofs%2Cgktju%60.ko-vqcjapa-",
     controls: "Arrow keys to hit notes in time with the music. Press when the arrows align.",
-    isWorking: true,
+    isWorking: false,
   },
   {
     id: 73,
