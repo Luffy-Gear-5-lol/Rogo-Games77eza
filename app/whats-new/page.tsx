@@ -16,36 +16,40 @@ export default function WhatsNewPage() {
       <p className="text-lg mb-8">Stay up to date with all the latest changes and improvements to Rogo Games.</p>
 
       <div className="space-y-8">
-        {/* May 2025 Updates */}
+        {/* May 2025 Updates - Latest */}
         <Card className="bg-gradient-to-r from-purple-900 to-indigo-900 border-gray-700">
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>May 2025 Updates</CardTitle>
               <Badge className="bg-pink-600 hover:bg-pink-700">Latest</Badge>
             </div>
-            <CardDescription className="text-gray-300">Major site improvements and new features</CardDescription>
+            <CardDescription className="text-gray-300">Major site improvements and bug fixes</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h3 className="text-xl font-semibold mb-2">New Features</h3>
+              <h3 className="text-xl font-semibold mb-2">Bug Fixes & Improvements</h3>
               <ul className="list-disc pl-6 space-y-1">
-                <li>Added "Recently Played" section on homepage showing your last 5 played games</li>
-                <li>Implemented game rating system with thumbs up/down functionality</li>
-                <li>Created dedicated category pages for Mario, Sonic, and Friday Night Funkin' games</li>
-                <li>Added a Proxy page for anonymous web browsing</li>
-                <li>Improved search functionality with better results and filtering</li>
-                <li>Added "Open in New Tab" feature that hides the game URL</li>
+                <li>Fixed poll functionality - now works properly for all users</li>
+                <li>Fixed game views counter - now starts at 0 and increments by 1 for each visit</li>
+                <li>Fixed likes/dislikes system - now toggles on/off when clicked</li>
+                <li>Made view counts visible to all users, not just admins</li>
+                <li>Simplified the UI by removing the "Browse by Category" section</li>
+                <li>Removed Categories link from the main navigation for a cleaner interface</li>
+                <li>Added new admin access for improved site management</li>
               </ul>
             </div>
             <Separator />
             <div>
               <h3 className="text-xl font-semibold mb-2">User Experience Improvements</h3>
               <ul className="list-disc pl-6 space-y-1">
-                <li>Replaced loading screen with skippable ads for better monetization</li>
-                <li>Improved game report functionality</li>
-                <li>Fixed game views tracking and popular games page</li>
-                <li>Sorted all games alphabetically for easier browsing</li>
-                <li>Added skill and timing categories to rhythm games</li>
+                <li>Improved game rating system with better toggle functionality</li>
+                <li>Enhanced manga reading experience with consistent button styling</li>
+                <li>Added "Recently Played" section on homepage showing your last 5 played games</li>
+                <li>Implemented game rating system with thumbs up/down functionality</li>
+                <li>Created dedicated category pages for Mario, Sonic, and Friday Night Funkin' games</li>
+                <li>Added a Proxy page for anonymous web browsing</li>
+                <li>Improved search functionality with better results and filtering</li>
+                <li>Added "Open in New Tab" feature that hides the game URL</li>
               </ul>
             </div>
             <Separator />

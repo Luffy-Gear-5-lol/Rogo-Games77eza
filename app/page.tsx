@@ -4,7 +4,7 @@ import { ChevronRight, Flame, Gamepad2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import FeaturedGames from "@/components/featured-games"
 import GameGrid from "@/components/game-grid"
-import CategoryFilter from "@/components/category-filter"
+import RecentlyPlayed from "@/components/recently-played"
 import { games } from "@/data/games"
 import { sortGames } from "@/utils/sort-utils"
 
@@ -44,6 +44,11 @@ export default function HomePage() {
           <FeaturedGames games={featuredGames} />
         </Suspense>
 
+        {/* Recently Played Games - positioned right after Featured Games */}
+        <div className="mt-12">
+          <RecentlyPlayed />
+        </div>
+
         <div className="mt-12">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-2xl font-bold flex items-center">
@@ -72,13 +77,6 @@ export default function HomePage() {
             </Link>
           </div>
           <GameGrid games={sortGames(fnfGames)} />
-        </div>
-
-        <div className="mt-12">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold">Browse by Category</h2>
-          </div>
-          <CategoryFilter />
         </div>
 
         <div className="mt-12">

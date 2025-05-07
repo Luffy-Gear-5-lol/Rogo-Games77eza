@@ -2,10 +2,17 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, AlertTriangle, ExternalLink } from "lucide-react"
+import { ArrowLeft, AlertTriangle, ExternalLink, Maximize, SkipForward } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { games } from "@/data/games"
-import { incrementGameView, likeGame, dislikeGame, getGameLikes } from "@/actions/game-actions"
+import {
+  incrementGameView,
+  likeGame,
+  dislikeGame,
+  getGameLikes,
+  unlikeGame,
+  undislikeGame,
+} from "@/actions/game-actions"
 import GameComplaintForm from "@/components/game-complaint-form"
 import GameAd from "@/components/game-ad"
 import { ThumbsUp, ThumbsDown } from "lucide-react"
@@ -20,6 +27,7 @@ export default function GamePage() {
   const [dislikes, setDislikes] = useState(0)
   const [userVote, setUserVote] = useState<"like" | "dislike" | null>(null)
   const [recentlyPlayed, setRecentlyPlayed] = useState<number[]>([])
+  const [viewCount, setViewCount] = useState(0)
 
   const slug = params?.slug as string
   const game = games.find((g) => g.slug === slug)
@@ -27,7 +35,9 @@ export default function GamePage() {
   useEffect(() => {
     if (game) {
       // Record the view
-      incrementGameView(game.id)
+      incrementGameView(game.id).then((count) => {
+        setViewCount(count)
+      })
 
       // Get likes/dislikes
       getGameLikes(game.id).then((data) => {
@@ -69,43 +79,84 @@ export default function GamePage() {
     setIsLoading(false)
   }
 
+  const handleSkipAd = () => {
+    setShowAd(false)
+    setIsLoading(false)
+  }
+
   const handleLike = async () => {
-    if (!game || userVote === "like") return
+    if (!game) return
 
-    const newLikes = await likeGame(game.id)
-    setLikes(newLikes)
+    try {
+      // If user already liked, unlike
+      if (userVote === "like") {
+        const newLikes = await unlikeGame(game.id)
+        setLikes(newLikes)
+        setUserVote(null)
 
-    // Save vote to localStorage
-    const votes = localStorage.getItem("gameVotes") || "{}"
-    const votesObj = JSON.parse(votes)
-    votesObj[game.id] = "like"
-    localStorage.setItem("gameVotes", JSON.stringify(votesObj))
+        // Update localStorage
+        const votes = localStorage.getItem("gameVotes") || "{}"
+        const votesObj = JSON.parse(votes)
+        delete votesObj[game.id]
+        localStorage.setItem("gameVotes", JSON.stringify(votesObj))
+      } else {
+        // If user previously disliked, remove that first
+        if (userVote === "dislike") {
+          const newDislikes = await undislikeGame(game.id)
+          setDislikes(newDislikes)
+        }
 
-    setUserVote("like")
+        // Like the game
+        const newLikes = await likeGame(game.id)
+        setLikes(newLikes)
+        setUserVote("like")
 
-    // If user previously disliked, reduce dislike count
-    if (userVote === "dislike") {
-      setDislikes((prev) => Math.max(0, prev - 1))
+        // Save vote to localStorage
+        const votes = localStorage.getItem("gameVotes") || "{}"
+        const votesObj = JSON.parse(votes)
+        votesObj[game.id] = "like"
+        localStorage.setItem("gameVotes", JSON.stringify(votesObj))
+      }
+    } catch (error) {
+      console.error("Error handling like:", error)
     }
   }
 
   const handleDislike = async () => {
-    if (!game || userVote === "dislike") return
+    if (!game) return
 
-    const newDislikes = await dislikeGame(game.id)
-    setDislikes(newDislikes)
+    try {
+      // If user already disliked, undislike
+      if (userVote === "dislike") {
+        const newDislikes = await undislikeGame(game.id)
+        setDislikes(newDislikes)
+        setUserVote(null)
 
-    // Save vote to localStorage
-    const votes = localStorage.getItem("gameVotes") || "{}"
-    const votesObj = JSON.parse(votes)
-    votesObj[game.id] = "dislike"
-    localStorage.setItem("gameVotes", JSON.stringify(votesObj))
+        // Update localStorage
+        const votes = localStorage.getItem("gameVotes") || "{}"
+        const votesObj = JSON.parse(votes)
+        delete votesObj[game.id]
+        localStorage.setItem("gameVotes", JSON.stringify(votesObj))
+      } else {
+        // If user previously liked, remove that first
+        if (userVote === "like") {
+          const newLikes = await unlikeGame(game.id)
+          setLikes(newLikes)
+        }
 
-    setUserVote("dislike")
+        // Dislike the game
+        const newDislikes = await dislikeGame(game.id)
+        setDislikes(newDislikes)
+        setUserVote("dislike")
 
-    // If user previously liked, reduce like count
-    if (userVote === "like") {
-      setLikes((prev) => Math.max(0, prev - 1))
+        // Save vote to localStorage
+        const votes = localStorage.getItem("gameVotes") || "{}"
+        const votesObj = JSON.parse(votes)
+        votesObj[game.id] = "dislike"
+        localStorage.setItem("gameVotes", JSON.stringify(votesObj))
+      }
+    } catch (error) {
+      console.error("Error handling dislike:", error)
     }
   }
 
@@ -130,6 +181,17 @@ export default function GamePage() {
         </html>
       `)
       newWindow.document.close()
+    }
+  }
+
+  const toggleFullscreen = () => {
+    const gameFrame = document.querySelector("iframe")
+    if (!gameFrame) return
+
+    if (document.fullscreenElement) {
+      document.exitFullscreen()
+    } else {
+      gameFrame.requestFullscreen()
     }
   }
 
@@ -184,7 +246,6 @@ export default function GamePage() {
               size="sm"
               className={`flex items-center gap-1 ${userVote === "like" ? "text-green-400" : "text-gray-400"}`}
               onClick={handleLike}
-              disabled={userVote === "like"}
             >
               <ThumbsUp className="h-4 w-4" /> {likes}
             </Button>
@@ -193,10 +254,10 @@ export default function GamePage() {
               size="sm"
               className={`flex items-center gap-1 ${userVote === "dislike" ? "text-red-400" : "text-gray-400"}`}
               onClick={handleDislike}
-              disabled={userVote === "dislike"}
             >
               <ThumbsDown className="h-4 w-4" /> {dislikes}
             </Button>
+            <span className="text-xs text-gray-500">{viewCount} views</span>
           </div>
         </div>
 
@@ -213,11 +274,21 @@ export default function GamePage() {
           </div>
         )}
 
-        <div className="bg-gray-800 rounded-lg overflow-hidden mb-8">
+        <div className="bg-gray-800 rounded-lg overflow-hidden mb-8 relative">
           <div className="aspect-video w-full">
             {isLoading ? (
               showAd ? (
-                <GameAd onComplete={handleAdComplete} />
+                <>
+                  <GameAd onComplete={handleAdComplete} />
+                  <Button
+                    onClick={handleSkipAd}
+                    variant="secondary"
+                    size="sm"
+                    className="absolute bottom-4 left-4 bg-black/70 hover:bg-black/90 text-white"
+                  >
+                    <SkipForward className="h-4 w-4 mr-1" /> Skip Ad
+                  </Button>
+                </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gray-900">
                   <div className="text-center p-6">
@@ -242,6 +313,28 @@ export default function GamePage() {
               </div>
             )}
           </div>
+
+          {/* Game controls at the bottom */}
+          {!isLoading && game.isWorking && (
+            <div className="absolute bottom-0 left-0 right-0 p-2 flex justify-between bg-black/50">
+              <Button onClick={handleSkipAd} variant="ghost" size="sm" className="text-white hover:bg-black/30">
+                <SkipForward className="h-4 w-4 mr-1" /> Skip Ad
+              </Button>
+              <div className="flex gap-2">
+                <Button onClick={toggleFullscreen} variant="ghost" size="sm" className="text-white hover:bg-black/30">
+                  <Maximize className="h-4 w-4 mr-1" /> Fullscreen
+                </Button>
+                <Button
+                  onClick={() => setShowComplaint(true)}
+                  variant="ghost"
+                  size="sm"
+                  className="text-white hover:bg-black/30"
+                >
+                  <AlertTriangle className="h-4 w-4 mr-1" /> Report Issue
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         {showComplaint && (

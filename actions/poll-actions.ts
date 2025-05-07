@@ -216,7 +216,7 @@ export async function getCurrentPoll(): Promise<Poll | null> {
         ...currentPoll,
         options: currentPoll.options.map((option) => ({
           ...option,
-          votes: 0, // Hide vote counts from non-admins
+          // Keep votes visible for everyone
         })),
       }
     }
@@ -256,7 +256,10 @@ export async function voteOnPoll(pollId: string, optionId: string): Promise<bool
     if (optionIndex === -1) return false
 
     // Increment vote count
-    poll.options[optionIndex].votes++
+    if (!poll.options[optionIndex].votes) {
+      poll.options[optionIndex].votes = 0
+    }
+    poll.options[optionIndex].votes += 1
 
     // Save updated polls
     fs.writeFileSync(pollsFilePath, JSON.stringify(pollsData, null, 2))

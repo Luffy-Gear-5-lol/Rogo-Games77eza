@@ -1,17 +1,14 @@
+"use client"
+
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowLeft, Star, Clock, Calendar } from "lucide-react"
+import { ArrowLeft, BookOpen, Star, Clock, Calendar, ExternalLink } from "lucide-react"
 import { manga } from "@/data/games"
 import { notFound } from "next/navigation"
-import { MangaReadButton } from "@/components/manga-read-button"
+import { useParams } from "next/navigation"
 
-export async function generateStaticParams() {
-  return manga.map((item) => ({
-    slug: item.slug,
-  }))
-}
-
-export default function MangaDetailPage({ params }: { params: { slug: string } }) {
+export default function MangaDetailPageClient() {
+  const params = useParams<{ slug: string }>()
   const mangaItem = manga.find((item) => item.slug === params.slug)
 
   if (!mangaItem) {
@@ -82,7 +79,20 @@ export default function MangaDetailPage({ params }: { params: { slug: string } }
               </div>
 
               <div className="pt-4">
-                <MangaReadButton url={readingLink} title={`Read ${mangaItem.title} Online`} />
+                <button
+                  onClick={() => {
+                    const newWindow = window.open("about:blank", "_blank")
+                    if (newWindow) {
+                      newWindow.document.write(`<script>window.location.href="${readingLink}"</script>`)
+                      newWindow.document.close()
+                    }
+                  }}
+                  className="flex items-center justify-center w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-colors"
+                >
+                  <BookOpen className="mr-2 h-5 w-5" />
+                  Read Manga Online
+                  <ExternalLink className="ml-2 h-4 w-4" />
+                </button>
               </div>
             </div>
           </div>

@@ -67,8 +67,8 @@
     "fs": "latest",
     "path": "latest",
     "google-spreadsheet": "latest",
-    "uuid": "latest",
-    "@vercel/analytics": "latest"
+    "@vercel/analytics": "latest",
+    "uuid": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

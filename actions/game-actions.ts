@@ -3,7 +3,6 @@
 import fs from "fs"
 import path from "path"
 import { games } from "@/data/games"
-import { isAdmin } from "@/utils/admin-utils"
 
 // Path to a JSON file that will store view counts
 const viewsFilePath = path.join(process.cwd(), "data", "game-views.json")
@@ -16,28 +15,13 @@ const initViewsFile = () => {
   }
 
   if (!fs.existsSync(viewsFilePath)) {
-    // Initialize with some random games having views
+    // Initialize with all games having 0 views
     const initialViews = {
       lastReset: new Date().toISOString(),
       games: games.reduce(
         (acc, game) => {
-          // Random views between 0-200 for initial data
-          const viewCount = Math.floor(Math.random() * 200)
-
-          // Create an array of timestamps for these views, all within the last 2 weeks
-          const now = new Date()
-          const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
-
-          const timestamps = []
-          for (let i = 0; i < viewCount; i++) {
-            // Random time between now and two weeks ago
-            const randomTime = new Date(
-              twoWeeksAgo.getTime() + Math.random() * (now.getTime() - twoWeeksAgo.getTime()),
-            ).toISOString()
-            timestamps.push(randomTime)
-          }
-
-          acc[game.id] = timestamps
+          // Start all games with 0 views
+          acc[game.id] = []
           return acc
         },
         {} as Record<number, string[]>,
@@ -89,25 +73,19 @@ const initLikesFile = () => {
   return JSON.parse(fs.readFileSync(likesFilePath, "utf-8"))
 }
 
-// Get all game views - only for admin
+// Get all game views - accessible to everyone
 export async function getGameViews(): Promise<Record<number, number>> {
   try {
-    if (!isAdmin()) {
-      return {}
-    }
-
     const viewsData = initViewsFile()
-    const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
 
-    // Count views within the last 2 weeks for each game
-    const recentViews: Record<number, number> = {}
+    // Count total views for each game
+    const totalViews: Record<number, number> = {}
 
     for (const [gameId, timestamps] of Object.entries(viewsData.games)) {
-      const recentTimestamps = timestamps.filter((timestamp) => timestamp >= twoWeeksAgo)
-      recentViews[Number(gameId)] = recentTimestamps.length
+      totalViews[Number(gameId)] = timestamps.length
     }
 
-    return recentViews
+    return totalViews
   } catch (error) {
     console.error("Error getting game views:", error)
     return {}
@@ -130,34 +108,27 @@ export async function incrementGameView(gameId: number): Promise<number> {
     // Save the updated views
     fs.writeFileSync(viewsFilePath, JSON.stringify(viewsData, null, 2))
 
-    // Only return the view count to admins
-    if (isAdmin()) {
-      const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
-      const recentViews = viewsData.games[gameId].filter((timestamp) => timestamp >= twoWeeksAgo).length
-      return recentViews
-    }
-    return 0
+    // Return the total view count to everyone
+    return viewsData.games[gameId].length
   } catch (error) {
     console.error("Error incrementing game view:", error)
     return 0
   }
 }
 
-// Get popular games based on view count in the last 2 weeks
+// Get popular games based on view count
 export async function getPopularGames(limit = 20): Promise<number[]> {
   try {
     const viewsData = initViewsFile()
-    const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
 
-    // Calculate recent views for each game
-    const recentViews: [string, number][] = Object.entries(viewsData.games).map(([gameId, timestamps]) => {
-      const recentCount = timestamps.filter((timestamp) => timestamp >= twoWeeksAgo).length
-      return [gameId, recentCount]
+    // Calculate views for each game
+    const gameViews: [string, number][] = Object.entries(viewsData.games).map(([gameId, timestamps]) => {
+      return [gameId, timestamps.length]
     })
 
-    // Sort by recent view count and filter for games with at least 100 views
-    return recentViews
-      .filter(([, count]) => count >= 100)
+    // Sort by view count and filter for games with at least 5 views (lowered threshold for testing)
+    return gameViews
+      .filter(([, count]) => count >= 5)
       .sort(([, countA], [, countB]) => countB - countA)
       .map(([id]) => Number(id))
       .slice(0, limit)
@@ -167,16 +138,14 @@ export async function getPopularGames(limit = 20): Promise<number[]> {
   }
 }
 
-// Check if a game is popular (has 100+ views in the last 2 weeks)
+// Check if a game is popular (has 5+ views - lowered threshold for testing)
 export async function isGamePopular(gameId: number): Promise<boolean> {
   try {
     const viewsData = initViewsFile()
-    const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
 
     if (!viewsData.games[gameId]) return false
 
-    const recentViews = viewsData.games[gameId].filter((timestamp) => timestamp >= twoWeeksAgo).length
-    return recentViews >= 100
+    return viewsData.games[gameId].length >= 5
   } catch (error) {
     console.error("Error checking if game is popular:", error)
     return false
@@ -220,6 +189,29 @@ export async function likeGame(gameId: number): Promise<number> {
   }
 }
 
+// Unlike a game
+export async function unlikeGame(gameId: number): Promise<number> {
+  try {
+    const likesData = initLikesFile()
+
+    // Initialize the game's likes if it doesn't exist
+    if (!likesData.games[gameId]) {
+      likesData.games[gameId] = { likes: 0, dislikes: 0 }
+    }
+
+    // Decrement likes, but don't go below 0
+    likesData.games[gameId].likes = Math.max(0, likesData.games[gameId].likes - 1)
+
+    // Save the updated likes
+    fs.writeFileSync(likesFilePath, JSON.stringify(likesData, null, 2))
+
+    return likesData.games[gameId].likes
+  } catch (error) {
+    console.error("Error unliking game:", error)
+    return 0
+  }
+}
+
 // Dislike a game
 export async function dislikeGame(gameId: number): Promise<number> {
   try {
@@ -239,6 +231,29 @@ export async function dislikeGame(gameId: number): Promise<number> {
     return likesData.games[gameId].dislikes
   } catch (error) {
     console.error("Error disliking game:", error)
+    return 0
+  }
+}
+
+// Undislike a game
+export async function undislikeGame(gameId: number): Promise<number> {
+  try {
+    const likesData = initLikesFile()
+
+    // Initialize the game's likes if it doesn't exist
+    if (!likesData.games[gameId]) {
+      likesData.games[gameId] = { likes: 0, dislikes: 0 }
+    }
+
+    // Decrement dislikes, but don't go below 0
+    likesData.games[gameId].dislikes = Math.max(0, likesData.games[gameId].dislikes - 1)
+
+    // Save the updated likes
+    fs.writeFileSync(likesFilePath, JSON.stringify(likesData, null, 2))
+
+    return likesData.games[gameId].dislikes
+  } catch (error) {
+    console.error("Error undisliking game:", error)
     return 0
   }
 }

@@ -1,7 +1,8 @@
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowLeft, BookOpen, Star, Clock, Calendar, ExternalLink } from "lucide-react"
+import { ArrowLeft, Star, Clock, Calendar } from "lucide-react"
 import { manga } from "@/data/games"
+import { MangaReadButton } from "@/components/manga-read-button"
 
 export default function OnePiecePage() {
   const onePiece = manga.find((item) => item.slug === "one-piece")
@@ -52,16 +53,7 @@ export default function OnePiecePage() {
               </div>
 
               <div className="pt-4">
-                <a
-                  href={readingLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-colors"
-                >
-                  <BookOpen className="mr-2 h-5 w-5" />
-                  Read One Piece Online
-                  <ExternalLink className="ml-2 h-4 w-4" />
-                </a>
+                <MangaReadButton url={readingLink} title="Read One Piece Online" />
               </div>
             </div>
           </div>

@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Menu, X, Search, Grid, Book, BarChart2, Bell, Smartphone, Flame } from "lucide-react"
+import { Menu, X, Search, Book, BarChart2, Bell, Smartphone, Flame } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
@@ -57,16 +57,6 @@ export default function SiteHeader() {
             >
               <Flame className="mr-1 h-4 w-4" />
               Popular
-            </Link>
-            <Link
-              href="/categories"
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-purple-600 flex items-center",
-                pathname === "/categories" || pathname.startsWith("/categories/") ? "text-purple-600" : "text-gray-400",
-              )}
-            >
-              <Grid className="mr-1 h-4 w-4" />
-              Categories
             </Link>
             <Link
               href="/manga"
@@ -210,16 +200,6 @@ export default function SiteHeader() {
             >
               <Flame className="mr-2 h-4 w-4" />
               Popular
-            </Link>
-            <Link
-              href="/categories"
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-purple-600 flex items-center",
-                pathname === "/categories" || pathname.startsWith("/categories/") ? "text-purple-600" : "text-gray-400",
-              )}
-            >
-              <Grid className="mr-2 h-4 w-4" />
-              Categories
             </Link>
             <Link
               href="/manga"

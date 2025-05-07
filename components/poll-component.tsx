@@ -1,11 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Calendar } from "lucide-react"
-import { isAdmin } from "@/utils/admin-utils"
 import type { Poll } from "@/types/poll"
 
 interface PollComponentProps {
@@ -26,10 +25,18 @@ export default function PollComponent({ poll, voteAction }: PollComponentProps) 
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   const [hasVoted, setHasVoted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const showResults = isAdmin() // Only admins can see results
+  const [pollResults, setPollResults] = useState<Poll>(poll)
+
+  // Check if user has already voted for this poll
+  useEffect(() => {
+    const votedPolls = localStorage.getItem("votedPolls") ? JSON.parse(localStorage.getItem("votedPolls") || "{}") : {}
+    if (votedPolls[poll.id]) {
+      setHasVoted(true)
+    }
+  }, [poll.id])
 
   // Calculate total votes
-  const totalVotes = poll.options.reduce((sum, option) => sum + (option.votes || 0), 0)
+  const totalVotes = pollResults.options.reduce((sum, option) => sum + (option.votes || 0), 0)
 
   // Format the poll end date
   const formatEndDate = (dateString: string) => {
@@ -52,11 +59,34 @@ export default function PollComponent({ poll, voteAction }: PollComponentProps) 
     if (!selectedOption || !poll.id) return
 
     setIsSubmitting(true)
-    const success = await voteAction(poll.id, selectedOption)
-    setIsSubmitting(false)
+    try {
+      const success = await voteAction(poll.id, selectedOption)
 
-    if (success) {
-      setHasVoted(true)
+      if (success) {
+        // Update local state to show the vote
+        setPollResults((prev) => {
+          const updatedOptions = prev.options.map((option) => {
+            if (option.id === selectedOption) {
+              return { ...option, votes: (option.votes || 0) + 1 }
+            }
+            return option
+          })
+          return { ...prev, options: updatedOptions }
+        })
+
+        setHasVoted(true)
+
+        // Save to localStorage to prevent multiple votes
+        const votedPolls = localStorage.getItem("votedPolls")
+          ? JSON.parse(localStorage.getItem("votedPolls") || "{}")
+          : {}
+        votedPolls[poll.id] = selectedOption
+        localStorage.setItem("votedPolls", JSON.stringify(votedPolls))
+      }
+    } catch (error) {
+      console.error("Error voting:", error)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -94,36 +124,27 @@ export default function PollComponent({ poll, voteAction }: PollComponentProps) 
         </>
       ) : (
         <div className="space-y-4">
-          {showResults ? (
-            <>
-              <p className="font-medium text-center mb-4">Thanks for voting! Here are the current results:</p>
+          <p className="font-medium text-center mb-4">Thanks for voting! Here are the current results:</p>
 
-              {poll.options.map((option) => {
-                const percentage = totalVotes > 0 ? Math.round(((option.votes || 0) / totalVotes) * 100) : 0
+          {pollResults.options.map((option) => {
+            const percentage = totalVotes > 0 ? Math.round(((option.votes || 0) / totalVotes) * 100) : 0
 
-                return (
-                  <div key={option.id} className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>{option.text}</span>
-                      <span>
-                        {option.votes || 0} vote{(option.votes || 0) !== 1 ? "s" : ""} ({percentage}%)
-                      </span>
-                    </div>
-                    <div className="h-2 w-full bg-gray-700 rounded-full overflow-hidden">
-                      <div className="h-full bg-purple-600" style={{ width: `${percentage}%` }} />
-                    </div>
-                  </div>
-                )
-              })}
+            return (
+              <div key={option.id} className="space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span>{option.text}</span>
+                  <span>
+                    {option.votes || 0} vote{(option.votes || 0) !== 1 ? "s" : ""} ({percentage}%)
+                  </span>
+                </div>
+                <div className="h-2 w-full bg-gray-700 rounded-full overflow-hidden">
+                  <div className="h-full bg-purple-600" style={{ width: `${percentage}%` }} />
+                </div>
+              </div>
+            )
+          })}
 
-              <p className="text-center text-sm text-gray-400 mt-4">Total votes: {totalVotes}</p>
-            </>
-          ) : (
-            <div className="text-center py-4">
-              <p className="font-medium">Thanks for voting!</p>
-              <p className="text-gray-400 mt-2">Your vote has been recorded.</p>
-            </div>
-          )}
+          <p className="text-center text-sm text-gray-400 mt-4">Total votes: {totalVotes}</p>
         </div>
       )}
     </div>
