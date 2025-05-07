@@ -2730,6 +2730,17 @@ export const games: Game[] = [
     controls: "IDC ",
     isWorking: true,
   },
+  {
+    id: 230,
+    title: "Garfield gets real",
+    slug: "Garfield-Gets-real",
+    description: "https://w8.snokido.com/games/html5/friday-night-funkin/hecker23/index.html",
+    image: "/images/games/bad-piggies.jpg",
+    categories: ["beat"],
+    playUrl: "https://seraph-eight-omega.vercel.app/games/garfieldgetsreal/index.html",
+    controls: "IDC ",
+    isWorking: true,
+  },
 ]
 
 export const manga: Game[] = [
