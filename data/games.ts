@@ -883,9 +883,9 @@ export const games: Game[] = [
       "A Friday Night Funkin' mod featuring Chara from Undertale. Match arrow keys to the beat in this challenging rhythm game crossover.",
     image: "/images/games/fnf-vs-chara.jpg",
     categories: ["Rhythm", "Music", "Crossover"],
-    playUrl: "https://topic.notes.homebrewer.org/math/hvtrs8%2F-fwniyoofs%2Cgktju%60.ko-vqcjapa-",
+    playUrl: "https://interstellar-steel-six.vercel.app/a/hvtrs8%2F-fwniyoofs%2Cgktju%60.ko-vqcjapa-",
     controls: "Arrow keys to hit notes in time with the music. Press when the arrows align.",
-    isWorking: false,
+    isWorking: true,
   },
   {
     id: 73,
