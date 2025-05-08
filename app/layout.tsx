@@ -18,10 +18,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
+      <body className="min-h-screen bg-black text-white antialiased">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          <SiteHeader />
-          <Suspense fallback={null}>{children}</Suspense>
+          <div className="relative flex min-h-screen flex-col">
+            <SiteHeader />
+            <div className="flex-1">
+              <Suspense fallback={null}>{children}</Suspense>
+            </div>
+          </div>
           <Analytics />
         </ThemeProvider>
       </body>

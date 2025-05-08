@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, AlertTriangle, ExternalLink, Maximize, SkipForward } from "lucide-react"
+import { ArrowLeft, AlertTriangle, ExternalLink, Maximize, SkipForward, ThumbsUp, ThumbsDown, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { games } from "@/data/games"
 import {
@@ -15,7 +15,8 @@ import {
 } from "@/actions/game-actions"
 import GameComplaintForm from "@/components/game-complaint-form"
 import GameAd from "@/components/game-ad"
-import { ThumbsUp, ThumbsDown } from "lucide-react"
+import GameCredits from "@/components/game-credits"
+import { getGameCredits } from "@/data/game-credits"
 
 export default function GamePage() {
   const params = useParams()
@@ -31,6 +32,11 @@ export default function GamePage() {
 
   const slug = params?.slug as string
   const game = games.find((g) => g.slug === slug)
+  const credits = getGameCredits(slug)
+
+  // Calculate like percentage
+  const totalVotes = likes + dislikes
+  const likePercentage = totalVotes > 0 ? Math.round((likes / totalVotes) * 100) : 0
 
   useEffect(() => {
     if (game) {
@@ -195,6 +201,17 @@ export default function GamePage() {
     }
   }
 
+  // Format numbers with k for thousands
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1).replace(/\.0$/, "") + " M"
+    }
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1).replace(/\.0$/, "") + " k"
+    }
+    return num.toString()
+  }
+
   if (!game) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex flex-col items-center justify-center p-4">
@@ -227,10 +244,10 @@ export default function GamePage() {
           </div>
         </div>
 
-        <h1 className="text-3xl font-bold mb-2">{game.title}</h1>
+        <h1 className="text-3xl font-bold mb-2 text-center md:text-left">{game.title}</h1>
 
         <div className="mb-6">
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-4 justify-center md:justify-start">
             {game.categories &&
               game.categories.map((category) => (
                 <span key={category} className="bg-gray-800 text-gray-300 px-3 py-1 rounded-full text-sm">
@@ -238,43 +255,73 @@ export default function GamePage() {
                 </span>
               ))}
           </div>
-          <p className="text-gray-400">{game.description}</p>
+          <p className="text-gray-400 text-center md:text-left">{game.description}</p>
 
-          <div className="mt-4 flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`flex items-center gap-1 ${userVote === "like" ? "text-green-400" : "text-gray-400"}`}
-              onClick={handleLike}
-            >
-              <ThumbsUp className="h-4 w-4" /> {likes}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`flex items-center gap-1 ${userVote === "dislike" ? "text-red-400" : "text-gray-400"}`}
-              onClick={handleDislike}
-            >
-              <ThumbsDown className="h-4 w-4" /> {dislikes}
-            </Button>
-            <span className="text-xs text-gray-500">{viewCount} views</span>
+          {/* YouTube-style rating system */}
+          <div className="mt-4 flex items-center justify-center md:justify-start gap-4">
+            <div className="flex items-center bg-gray-800/80 rounded-full px-1 py-1">
+              <button
+                onClick={handleLike}
+                className={`flex items-center px-3 py-1 rounded-l-full ${userVote === "like" ? "text-blue-400" : "text-gray-400 hover:text-white"}`}
+                aria-label="Like game"
+              >
+                <ThumbsUp size={18} className="mr-2" />
+                <span className="text-sm font-medium">{formatNumber(likes)}</span>
+              </button>
+
+              <div className="h-5 w-px bg-gray-700 mx-1"></div>
+
+              <button
+                onClick={handleDislike}
+                className={`flex items-center px-3 py-1 rounded-r-full ${userVote === "dislike" ? "text-blue-400" : "text-gray-400 hover:text-white"}`}
+                aria-label="Dislike game"
+              >
+                <ThumbsDown size={18} className="mr-2" />
+                <span className="text-sm font-medium">{formatNumber(dislikes)}</span>
+              </button>
+            </div>
+
+            <div className="bg-gray-800/80 text-white font-medium text-sm px-3 py-1 rounded-full">
+              {likePercentage}%
+            </div>
+
+            <div className="ml-auto flex items-center text-gray-400">
+              <Eye className="h-4 w-4 mr-1" />
+              <span className="text-sm">{formatNumber(viewCount)} views</span>
+            </div>
           </div>
         </div>
 
+        {/* Game unavailable notification */}
         {!game.isWorking && (
-          <div className="bg-red-900/30 border border-red-700 rounded-lg p-4 mb-6 flex items-start">
-            <AlertTriangle className="h-5 w-5 text-red-400 mr-3 mt-0.5 flex-shrink-0" />
-            <div>
-              <h3 className="font-bold text-red-400">Game Currently Unavailable</h3>
-              <p className="text-gray-300 text-sm">
-                This game is currently not working. Our team is working to fix it. Please try another game or check back
-                later.
-              </p>
+          <div className="bg-gradient-to-r from-red-900/30 to-red-800/20 border border-red-700/50 rounded-lg p-4 mb-6">
+            <div className="flex items-start">
+              <div className="bg-red-500/20 p-2 rounded-full mr-3">
+                <AlertTriangle className="h-5 w-5 text-red-400" />
+              </div>
+              <div>
+                <h3 className="font-bold text-red-400 text-lg">Game Currently Unavailable</h3>
+                <p className="text-gray-300 text-sm mt-1">
+                  This game is currently not working. Our team is working to fix it. Please try another game or check
+                  back later.
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 pl-10">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-red-400 border-red-700/50 hover:bg-red-900/30"
+                onClick={() => router.push("/")}
+              >
+                Browse Other Games
+              </Button>
             </div>
           </div>
         )}
 
-        <div className="bg-gray-800 rounded-lg overflow-hidden mb-8 relative">
+        {/* Game frame */}
+        <div className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-lg overflow-hidden mb-8 relative shadow-xl shadow-purple-900/10 border border-gray-700">
           <div className="aspect-video w-full">
             {isLoading ? (
               showAd ? (
@@ -316,19 +363,19 @@ export default function GamePage() {
 
           {/* Game controls at the bottom */}
           {!isLoading && game.isWorking && (
-            <div className="absolute bottom-0 left-0 right-0 p-2 flex justify-between bg-black/50">
-              <Button onClick={handleSkipAd} variant="ghost" size="sm" className="text-white hover:bg-black/30">
+            <div className="absolute bottom-0 left-0 right-0 p-2 flex justify-between bg-gradient-to-r from-black/70 to-black/50 backdrop-blur-sm">
+              <Button onClick={handleSkipAd} variant="ghost" size="sm" className="text-white hover:bg-white/10">
                 <SkipForward className="h-4 w-4 mr-1" /> Skip Ad
               </Button>
               <div className="flex gap-2">
-                <Button onClick={toggleFullscreen} variant="ghost" size="sm" className="text-white hover:bg-black/30">
+                <Button onClick={toggleFullscreen} variant="ghost" size="sm" className="text-white hover:bg-white/10">
                   <Maximize className="h-4 w-4 mr-1" /> Fullscreen
                 </Button>
                 <Button
                   onClick={() => setShowComplaint(true)}
                   variant="ghost"
                   size="sm"
-                  className="text-white hover:bg-black/30"
+                  className="text-white hover:bg-white/10"
                 >
                   <AlertTriangle className="h-4 w-4 mr-1" /> Report Issue
                 </Button>
@@ -341,9 +388,22 @@ export default function GamePage() {
           <GameComplaintForm gameId={game.id} gameTitle={game.title} onClose={() => setShowComplaint(false)} />
         )}
 
-        <div className="bg-gray-800 rounded-lg p-6 mb-8">
-          <h2 className="text-xl font-bold mb-4">How to Play</h2>
-          <p className="text-gray-300 mb-4">{game.controls}</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="bg-gray-800 rounded-lg p-6">
+            <h2 className="text-xl font-bold mb-4">How to Play</h2>
+            <p className="text-gray-300">{game.controls}</p>
+          </div>
+
+          {credits && (
+            <div>
+              <GameCredits
+                modCredits={credits.modCredits}
+                originalCredits={credits.originalCredits}
+                additionalInfo={credits.additionalInfo}
+                songs={credits.songs}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

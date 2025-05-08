@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { isAdmin } from "@/utils/admin-utils"
 import type { Game } from "@/types/game"
+import GameRating from "./game-rating"
 
 // Update the GameCardProps interface to include an isNew property
 interface GameCardProps {
@@ -36,7 +37,7 @@ export default function GameCard({ game, isNew = false }: GameCardProps) {
   const imageSrc = game.image || "/placeholder.svg?height=200&width=350"
 
   return (
-    <Card className="overflow-hidden bg-gray-800 border-gray-700 transition-all hover:shadow-lg hover:shadow-purple-500/20">
+    <Card className="overflow-hidden bg-gradient-to-b from-gray-800 to-gray-900 border-gray-700 transition-all hover:shadow-lg hover:shadow-purple-500/20 group">
       <div className="relative aspect-video overflow-hidden">
         <Image
           src={imageSrc || "/placeholder.svg"}
@@ -67,13 +68,13 @@ export default function GameCard({ game, isNew = false }: GameCardProps) {
                 {game.categories[0]}
               </Badge>
             )}
-            <Button size="sm" className="rounded-full bg-white text-black hover:bg-gray-200">
+            <Button size="sm" className="rounded-full bg-white text-black hover:bg-gray-200" data-game-id={game.id}>
               <Play className="h-4 w-4 fill-current" />
             </Button>
           </div>
         </div>
       </div>
-      <CardContent className="p-4">
+      <CardContent className="p-4 flex flex-col h-[120px]">
         <Link href={gameLink}>
           <h3 className="mb-1 font-bold hover:text-purple-400">{game.title}</h3>
         </Link>
@@ -91,6 +92,16 @@ export default function GameCard({ game, isNew = false }: GameCardProps) {
                 {category}
               </Badge>
             ))}
+          </div>
+        )}
+        {/* Game rating */}
+        <div className="mt-2">
+          <GameRating gameId={game.id} initialLikes={game.likes || 0} initialDislikes={game.dislikes || 0} />
+        </div>
+        {game.views !== undefined && (
+          <div className="mt-auto pt-2 text-xs text-gray-500 flex items-center">
+            <Eye className="h-3 w-3 mr-1 inline" />
+            {game.views.toLocaleString()} views
           </div>
         )}
       </CardContent>
