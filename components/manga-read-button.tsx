@@ -10,13 +10,26 @@ interface MangaReadButtonProps {
 }
 
 export function MangaReadButton({ url, title = "Read Manga Online", className = "" }: MangaReadButtonProps) {
-  const readUrl = url
-
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault()
     const newWindow = window.open("about:blank", "_blank")
     if (newWindow) {
-      newWindow.document.write(`<script>window.location.href="${readUrl}"</script>`)
+      // Keep the window on about:blank and use a hidden iframe to load the content
+      newWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Reading Manga</title>
+          <style>
+            body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #000; }
+            iframe { width: 100%; height: 100%; border: none; }
+          </style>
+        </head>
+        <body>
+          <iframe src="${url}" allowfullscreen></iframe>
+        </body>
+        </html>
+      `)
       newWindow.document.close()
     }
   }

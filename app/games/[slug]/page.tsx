@@ -27,7 +27,6 @@ export default function GamePage() {
   const [likes, setLikes] = useState(0)
   const [dislikes, setDislikes] = useState(0)
   const [userVote, setUserVote] = useState<"like" | "dislike" | null>(null)
-  const [recentlyPlayed, setRecentlyPlayed] = useState<number[]>([])
   const [viewCount, setViewCount] = useState(0)
 
   const slug = params?.slug as string
@@ -76,7 +75,6 @@ export default function GamePage() {
       }
 
       localStorage.setItem("recentlyPlayed", JSON.stringify(recentGames))
-      setRecentlyPlayed(recentGames)
     }
   }, [game])
 
@@ -255,14 +253,16 @@ export default function GamePage() {
                 </span>
               ))}
           </div>
-          <p className="text-gray-400 text-center md:text-left">{game.description}</p>
+          <p className="text-gray-400 text-center md:text-left mb-4">{game.description}</p>
 
           {/* YouTube-style rating system */}
-          <div className="mt-4 flex items-center justify-center md:justify-start gap-4">
+          <div className="flex items-center justify-center md:justify-start gap-4 mb-4">
             <div className="flex items-center bg-gray-800/80 rounded-full px-1 py-1">
               <button
                 onClick={handleLike}
-                className={`flex items-center px-3 py-1 rounded-l-full ${userVote === "like" ? "text-blue-400" : "text-gray-400 hover:text-white"}`}
+                className={`flex items-center px-3 py-1 rounded-l-full transition-colors ${
+                  userVote === "like" ? "text-blue-400" : "text-gray-400 hover:text-white"
+                }`}
                 aria-label="Like game"
               >
                 <ThumbsUp size={18} className="mr-2" />
@@ -273,7 +273,9 @@ export default function GamePage() {
 
               <button
                 onClick={handleDislike}
-                className={`flex items-center px-3 py-1 rounded-r-full ${userVote === "dislike" ? "text-blue-400" : "text-gray-400 hover:text-white"}`}
+                className={`flex items-center px-3 py-1 rounded-r-full transition-colors ${
+                  userVote === "dislike" ? "text-blue-400" : "text-gray-400 hover:text-white"
+                }`}
                 aria-label="Dislike game"
               >
                 <ThumbsDown size={18} className="mr-2" />
@@ -285,11 +287,21 @@ export default function GamePage() {
               {likePercentage}%
             </div>
 
-            <div className="ml-auto flex items-center text-gray-400">
+            <div className="flex items-center text-gray-400">
               <Eye className="h-4 w-4 mr-1" />
               <span className="text-sm">{formatNumber(viewCount)} views</span>
             </div>
           </div>
+
+          {/* Game Credits integrated into main info section */}
+          {credits && (
+            <GameCredits
+              modCredits={credits.modCredits}
+              originalCredits={credits.originalCredits}
+              additionalInfo={credits.additionalInfo}
+              songs={credits.songs}
+            />
+          )}
         </div>
 
         {/* Game unavailable notification */}
@@ -388,22 +400,9 @@ export default function GamePage() {
           <GameComplaintForm gameId={game.id} gameTitle={game.title} onClose={() => setShowComplaint(false)} />
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-gray-800 rounded-lg p-6">
-            <h2 className="text-xl font-bold mb-4">How to Play</h2>
-            <p className="text-gray-300">{game.controls}</p>
-          </div>
-
-          {credits && (
-            <div>
-              <GameCredits
-                modCredits={credits.modCredits}
-                originalCredits={credits.originalCredits}
-                additionalInfo={credits.additionalInfo}
-                songs={credits.songs}
-              />
-            </div>
-          )}
+        <div className="bg-gray-800 rounded-lg p-6">
+          <h2 className="text-xl font-bold mb-4">How to Play</h2>
+          <p className="text-gray-300">{game.controls}</p>
         </div>
       </div>
     </div>
