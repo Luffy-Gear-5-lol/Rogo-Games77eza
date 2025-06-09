@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Menu, X, Search, Book, BarChart2, Bell, Smartphone, Flame } from "lucide-react"
+import { Menu, X, Search, Book, BarChart2, Bell, Smartphone, Flame, MessageSquare } from "lucide-react" // Import MessageSquare
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
@@ -97,6 +97,16 @@ export default function SiteHeader() {
             >
               <Smartphone className="mr-1 h-4 w-4" />
               Apps
+            </Link>
+            <Link
+              href="/chat" // New chat link
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-purple-600 flex items-center",
+                pathname === "/chat" ? "text-purple-600" : "text-gray-400",
+              )}
+            >
+              <MessageSquare className="mr-1 h-4 w-4" />
+              Chat
             </Link>
           </nav>
         </div>
@@ -240,6 +250,16 @@ export default function SiteHeader() {
             >
               <Smartphone className="mr-2 h-4 w-4" />
               Apps
+            </Link>
+            <Link
+              href="/chat" // New chat link
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-purple-600 flex items-center",
+                pathname === "/chat" ? "text-purple-600" : "text-gray-400",
+              )}
+            >
+              <MessageSquare className="mr-2 h-4 w-4" />
+              Chat
             </Link>
           </nav>
         </div>

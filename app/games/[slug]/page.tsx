@@ -53,9 +53,14 @@ export default function GamePage() {
       // Check if user has voted before
       const votes = localStorage.getItem("gameVotes")
       if (votes) {
-        const votesObj = JSON.parse(votes)
-        if (votesObj[game.id]) {
-          setUserVote(votesObj[game.id])
+        try {
+          const votesObj = JSON.parse(votes)
+          if (votesObj[game.id]) {
+            setUserVote(votesObj[game.id])
+          }
+        } catch (e) {
+          console.error("Error parsing gameVotes from localStorage:", e)
+          localStorage.removeItem("gameVotes") // Clear corrupted data
         }
       }
 
@@ -255,13 +260,25 @@ export default function GamePage() {
           </div>
           <p className="text-gray-400 text-center md:text-left mb-4">{game.description}</p>
 
+          {/* Game Credits integrated into main info section */}
+          {credits && (
+            <GameCredits
+              modCredits={credits.modCredits}
+              originalCredits={credits.originalCredits}
+              additionalInfo={credits.additionalInfo}
+              songs={credits.songs}
+            />
+          )}
+
           {/* YouTube-style rating system */}
-          <div className="flex items-center justify-center md:justify-start gap-4 mb-4">
+          <div className="flex items-center justify-center md:justify-start gap-4 mt-4">
+            {" "}
+            {/* Added mt-4 for spacing */}
             <div className="flex items-center bg-gray-800/80 rounded-full px-1 py-1">
               <button
                 onClick={handleLike}
                 className={`flex items-center px-3 py-1 rounded-l-full transition-colors ${
-                  userVote === "like" ? "text-blue-400" : "text-gray-400 hover:text-white"
+                  userVote === "like" ? "text-blue-400 bg-blue-500/50" : "text-gray-400 hover:text-white"
                 }`}
                 aria-label="Like game"
               >
@@ -274,7 +291,7 @@ export default function GamePage() {
               <button
                 onClick={handleDislike}
                 className={`flex items-center px-3 py-1 rounded-r-full transition-colors ${
-                  userVote === "dislike" ? "text-blue-400" : "text-gray-400 hover:text-white"
+                  userVote === "dislike" ? "text-blue-400 bg-blue-500/50" : "text-gray-400 hover:text-white"
                 }`}
                 aria-label="Dislike game"
               >
@@ -282,26 +299,14 @@ export default function GamePage() {
                 <span className="text-sm font-medium">{formatNumber(dislikes)}</span>
               </button>
             </div>
-
             <div className="bg-gray-800/80 text-white font-medium text-sm px-3 py-1 rounded-full">
               {likePercentage}%
             </div>
-
             <div className="flex items-center text-gray-400">
               <Eye className="h-4 w-4 mr-1" />
               <span className="text-sm">{formatNumber(viewCount)} views</span>
             </div>
           </div>
-
-          {/* Game Credits integrated into main info section */}
-          {credits && (
-            <GameCredits
-              modCredits={credits.modCredits}
-              originalCredits={credits.originalCredits}
-              additionalInfo={credits.additionalInfo}
-              songs={credits.songs}
-            />
-          )}
         </div>
 
         {/* Game unavailable notification */}
