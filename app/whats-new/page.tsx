@@ -16,12 +16,114 @@ export default function WhatsNewPage() {
       <p className="text-lg mb-8">Stay up to date with all the latest changes and improvements to Rogo Games.</p>
 
       <div className="space-y-8">
-        {/* May 2025 Updates - Latest */}
+        {/* July 2025 Updates - Latest */}
         <Card className="bg-gradient-to-r from-purple-900 to-indigo-900 border-gray-700">
           <CardHeader>
             <div className="flex justify-between items-center">
-              <CardTitle>May 2025 Updates</CardTitle>
+              <CardTitle>July 2025 Updates</CardTitle>
               <Badge className="bg-pink-600 hover:bg-pink-700">Latest</Badge>
+            </div>
+            <CardDescription className="text-gray-300">
+              Navigation improvements and feature reorganization
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <h3 className="text-xl font-semibold mb-2">Navigation Enhancements</h3>
+              <ul className="list-disc pl-6 space-y-1">
+                <li>Restored Rogo Chat to main navigation for easy access</li>
+                <li>Removed Rogo Chat from the Apps section to avoid duplication</li>
+                <li>Fixed all header navigation links to ensure proper functionality</li>
+                <li>Improved mobile navigation menu with consistent styling</li>
+                <li>Enhanced search functionality with better placeholder text</li>
+              </ul>
+            </div>
+            <Separator />
+            <div>
+              <h3 className="text-xl font-semibold mb-2">Apps Section Updates</h3>
+              <ul className="list-disc pl-6 space-y-1">
+                <li>Streamlined Apps page by removing redundant chat feature</li>
+                <li>Focused Apps section on mobile app and game creation tools</li>
+                <li>Improved app card layouts and descriptions</li>
+              </ul>
+            </div>
+            <Separator />
+            <div>
+              <h3 className="text-xl font-semibold mb-2">User Experience Improvements</h3>
+              <ul className="list-disc pl-6 space-y-1">
+                <li>Consistent header functionality across all pages</li>
+                <li>Better organization of features and navigation</li>
+                <li>Improved accessibility with proper link structures</li>
+                <li>Enhanced mobile responsiveness for all navigation elements</li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* June 2025 Updates */}
+        <Card className="bg-gradient-to-r from-emerald-900 to-purple-900 border-gray-700">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>June 2025 Updates</CardTitle>
+              <Badge className="bg-emerald-600 hover:bg-emerald-700">Recent</Badge>
+            </div>
+            <CardDescription className="text-gray-300">
+              Game counter implementation and image optimization
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <h3 className="text-xl font-semibold mb-2">Game Counter Features</h3>
+              <ul className="list-disc pl-6 space-y-1">
+                <li>Attempted to add dynamic game counter to "All Games" section</li>
+                <li>Experimented with game counter placement in header and main content</li>
+                <li>Worked on displaying total number of available games</li>
+                <li>Tested various counter designs with purple gradient styling</li>
+                <li>Implemented automatic counter updates when games are added/removed</li>
+              </ul>
+            </div>
+            <Separator />
+            <div>
+              <h3 className="text-xl font-semibold mb-2">Image System Improvements</h3>
+              <ul className="list-disc pl-6 space-y-1">
+                <li>Added Among Us game cover art with proper image integration</li>
+                <li>Worked on optimizing image loading performance</li>
+                <li>Implemented image fallback systems for better reliability</li>
+                <li>Added proper alt text for accessibility compliance</li>
+                <li>Explored image upload system for user-generated content</li>
+              </ul>
+            </div>
+            <Separator />
+            <div>
+              <h3 className="text-xl font-semibold mb-2">Technical Improvements</h3>
+              <ul className="list-disc pl-6 space-y-1">
+                <li>Fixed server-side rendering issues with game data</li>
+                <li>Improved error handling for deployment issues</li>
+                <li>Enhanced component structure for better maintainability</li>
+                <li>Optimized data fetching from games database</li>
+                <li>Resolved import/export conflicts in component files</li>
+              </ul>
+            </div>
+            <Separator />
+            <div>
+              <h3 className="text-xl font-semibold mb-2">User Interface Refinements</h3>
+              <ul className="list-disc pl-6 space-y-1">
+                <li>Experimented with different counter positions and styles</li>
+                <li>Maintained consistent design language across all sections</li>
+                <li>Ensured counter integration doesn't disrupt existing layout</li>
+                <li>Tested responsive behavior on various screen sizes</li>
+                <li>Refined purple gradient theme consistency</li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* May 2025 Updates */}
+        <Card className="bg-gradient-to-r from-blue-900 to-purple-900 border-gray-700">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>May 2025 Updates</CardTitle>
+              <Badge className="bg-blue-600 hover:bg-blue-700">Previous</Badge>
             </div>
             <CardDescription className="text-gray-300">Major site improvements and bug fixes</CardDescription>
           </CardHeader>
@@ -65,7 +167,7 @@ export default function WhatsNewPage() {
         </Card>
 
         {/* April 2025 Updates */}
-        <Card className="bg-gradient-to-r from-blue-900 to-indigo-900 border-gray-700">
+        <Card className="bg-gradient-to-r from-cyan-900 to-blue-900 border-gray-700">
           <CardHeader>
             <CardTitle>April 2025 Updates</CardTitle>
             <CardDescription className="text-gray-300">Major improvements to game clarity and privacy</CardDescription>
@@ -99,7 +201,7 @@ export default function WhatsNewPage() {
         </Card>
 
         {/* March 2025 Updates */}
-        <Card className="bg-gradient-to-r from-cyan-900 to-blue-900 border-gray-700">
+        <Card className="bg-gradient-to-r from-teal-900 to-cyan-900 border-gray-700">
           <CardHeader>
             <CardTitle>March 2025 Updates</CardTitle>
             <CardDescription className="text-gray-300">
@@ -136,7 +238,7 @@ export default function WhatsNewPage() {
         </Card>
 
         {/* February 2025 Updates */}
-        <Card className="bg-gradient-to-r from-teal-900 to-cyan-900 border-gray-700">
+        <Card className="bg-gradient-to-r from-green-900 to-teal-900 border-gray-700">
           <CardHeader>
             <CardTitle>February 2025 Updates</CardTitle>
             <CardDescription className="text-gray-300">Poll scheduling and UI improvements</CardDescription>
@@ -163,7 +265,7 @@ export default function WhatsNewPage() {
         </Card>
 
         {/* January 2025 Updates */}
-        <Card className="bg-gradient-to-r from-green-900 to-teal-900 border-gray-700">
+        <Card className="bg-gradient-to-r from-yellow-900 to-green-900 border-gray-700">
           <CardHeader>
             <CardTitle>January 2025 Updates</CardTitle>
             <CardDescription className="text-gray-300">Major feature additions and UI improvements</CardDescription>
@@ -200,7 +302,7 @@ export default function WhatsNewPage() {
         </Card>
 
         {/* Site Launch */}
-        <Card className="bg-gradient-to-r from-yellow-900 to-green-900 border-gray-700">
+        <Card className="bg-gradient-to-r from-orange-900 to-yellow-900 border-gray-700">
           <CardHeader>
             <CardTitle>Site Launch</CardTitle>
             <CardDescription className="text-gray-300">Welcome to Rogo Games!</CardDescription>
@@ -215,6 +317,9 @@ export default function WhatsNewPage() {
                 <li>Mobile-responsive design</li>
                 <li>Dark mode support</li>
                 <li>Game series pages for related games</li>
+                <li>Chat functionality for gamers to connect</li>
+                <li>Manga reading section</li>
+                <li>Poll system for community engagement</li>
               </ul>
             </div>
           </CardContent>

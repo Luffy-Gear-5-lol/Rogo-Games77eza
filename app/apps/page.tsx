@@ -18,13 +18,6 @@ export default function AppsPage() {
       icon: "🎮",
       status: "Coming Soon",
     },
-    {
-      id: 3,
-      title: "Rogo Chat",
-      description: "Chat with other gamers and make new friends.",
-      icon: "💬",
-      status: "Coming Soon",
-    },
   ]
 
   return (
