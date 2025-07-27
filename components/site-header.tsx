@@ -1,5 +1,3 @@
-import { games } from "@/data/games"
-
 export default function SiteHeader() {
   return (
     <header className="bg-white py-4 shadow-md">
@@ -8,12 +6,6 @@ export default function SiteHeader() {
           <a href="/" className="text-2xl font-bold text-gray-800">
             My Awesome Site
           </a>
-
-          {/* Add this in the header, perhaps next to the logo */}
-          <div className="hidden md:flex items-center gap-2 text-sm text-gray-400">
-            <span className="bg-purple-600 text-white px-2 py-1 rounded-full text-xs font-bold">{games.length}</span>
-            <span>Games</span>
-          </div>
 
           <nav>
             <ul className="flex space-x-6">
