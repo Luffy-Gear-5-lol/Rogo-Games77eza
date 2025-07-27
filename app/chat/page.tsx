@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -17,6 +17,8 @@ import {
   addOnlineUser,
   removeOnlineUser,
   getOnlineUsers,
+  updateUserActivity,
+  type OnlineUser,
 } from "@/utils/chat-storage"
 import UserSetup from "@/components/user-setup"
 
@@ -65,58 +67,100 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState("")
   const [activeChannel, setActiveChannel] = useState<Channel>(channels[0])
-  const [onlineUsers, setOnlineUsers] = useState<string[]>([])
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([])
   const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const activityIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Initialize user on component mount
   useEffect(() => {
     const currentUser = getCurrentUser()
     if (currentUser) {
       setUser(currentUser)
-      addOnlineUser(currentUser.id)
+      addOnlineUser(currentUser)
     }
   }, [])
 
-  // Load messages for active channel
-  useEffect(() => {
-    if (user) {
-      const channelMessages = getMessages(activeChannel.id)
-      setMessages(channelMessages)
-    }
-  }, [activeChannel.id, user])
-
-  // Set up message polling for real-time updates
+  // Load messages for active channel and set up real-time listeners
   useEffect(() => {
     if (!user) return
 
-    const pollMessages = () => {
+    const loadMessages = () => {
       const channelMessages = getMessages(activeChannel.id)
       setMessages(channelMessages)
-      setOnlineUsers(getOnlineUsers())
     }
 
-    // Poll every 1 second for new messages
-    const interval = setInterval(pollMessages, 1000)
+    const loadOnlineUsers = () => {
+      const users = getOnlineUsers()
+      setOnlineUsers(users)
+    }
 
-    // Listen for storage events (when messages are added in other tabs)
+    // Initial load
+    loadMessages()
+    loadOnlineUsers()
+
+    // Set up event listeners for real-time updates
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === `rogo-chat-messages-${activeChannel.id}`) {
-        pollMessages()
+        loadMessages()
+      }
+      if (e.key === "rogo-chat-online-users") {
+        loadOnlineUsers()
       }
     }
 
+    const handleMessageAdded = (e: CustomEvent) => {
+      if (e.detail.channel === activeChannel.id) {
+        loadMessages()
+      }
+    }
+
+    const handleUsersUpdated = (e: CustomEvent) => {
+      setOnlineUsers(e.detail.users)
+    }
+
+    // Add event listeners
     window.addEventListener("storage", handleStorageChange)
+    window.addEventListener("chat-message-added", handleMessageAdded as EventListener)
+    window.addEventListener("chat-users-updated", handleUsersUpdated as EventListener)
+
+    // Set up polling as backup for same-tab updates
+    const pollInterval = setInterval(() => {
+      loadMessages()
+      loadOnlineUsers()
+    }, 2000)
 
     return () => {
-      clearInterval(interval)
       window.removeEventListener("storage", handleStorageChange)
+      window.removeEventListener("chat-message-added", handleMessageAdded as EventListener)
+      window.removeEventListener("chat-users-updated", handleUsersUpdated as EventListener)
+      clearInterval(pollInterval)
     }
   }, [activeChannel.id, user])
+
+  // Set up user activity tracking
+  useEffect(() => {
+    if (!user) return
+
+    // Update user activity every 10 seconds
+    activityIntervalRef.current = setInterval(() => {
+      updateUserActivity(user.id)
+      addOnlineUser(user) // Refresh user presence
+    }, 10000)
+
+    return () => {
+      if (activityIntervalRef.current) {
+        clearInterval(activityIntervalRef.current)
+      }
+    }
+  }, [user])
 
   // Scroll to bottom on new message
   useEffect(() => {
     if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
+      const scrollElement = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]")
+      if (scrollElement) {
+        scrollElement.scrollTop = scrollElement.scrollHeight
+      }
     }
   }, [messages])
 
@@ -126,46 +170,53 @@ export default function ChatPage() {
       if (user) {
         removeOnlineUser(user.id)
       }
+      if (activityIntervalRef.current) {
+        clearInterval(activityIntervalRef.current)
+      }
     }
   }, [user])
 
-  const handleUserCreated = (newUser: User) => {
+  const handleUserCreated = useCallback((newUser: User) => {
     setUser(newUser)
-    addOnlineUser(newUser.id)
-  }
+    addOnlineUser(newUser)
+  }, [])
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (newMessage.trim() && user) {
-      const filteredMessage = filterProfanity(newMessage.trim(), activeChannel.filterLevel)
-      const message: ChatMessage = {
-        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        userId: user.id,
-        username: user.username,
-        avatar: user.avatar,
-        text: filteredMessage,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        channel: activeChannel.id,
+  const handleSendMessage = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault()
+      if (newMessage.trim() && user) {
+        const filteredMessage = filterProfanity(newMessage.trim(), activeChannel.filterLevel)
+        const message: ChatMessage = {
+          id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          userId: user.id,
+          username: user.username,
+          avatar: user.avatar,
+          text: filteredMessage,
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          channel: activeChannel.id,
+        }
+
+        saveMessage(message)
+        setNewMessage("")
+
+        // Update user activity
+        updateUserActivity(user.id)
       }
-      saveMessage(message)
-      setNewMessage("")
+    },
+    [newMessage, user, activeChannel],
+  )
 
-      // Immediately update local state
-      setMessages((prev) => [...prev, message])
-    }
-  }
-
-  const changeChannel = (channel: Channel) => {
+  const changeChannel = useCallback((channel: Channel) => {
     setActiveChannel(channel)
-  }
+  }, [])
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     if (user) {
       removeOnlineUser(user.id)
       localStorage.removeItem("rogo-chat-user")
       setUser(null)
     }
-  }
+  }, [user])
 
   // Show user setup if no user is logged in
   if (!user) {
@@ -178,7 +229,9 @@ export default function ChatPage() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">Rogo Chat</h1>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-400">{onlineUsers.length} users online</span>
+            <span className="text-sm text-gray-400">
+              {onlineUsers.length} user{onlineUsers.length !== 1 ? "s" : ""} online
+            </span>
             <Button
               onClick={handleLogout}
               variant="outline"
@@ -224,7 +277,27 @@ export default function ChatPage() {
               ))}
             </div>
 
-            <div className="mt-auto pt-4 border-t border-gray-700">
+            {/* Online Users List */}
+            <div className="mt-4 pt-4 border-t border-gray-700">
+              <h3 className="text-sm font-semibold text-gray-400 mb-2">Online Users</h3>
+              <div className="space-y-1 max-h-32 overflow-y-auto">
+                {onlineUsers.map((onlineUser) => (
+                  <div key={onlineUser.id} className="flex items-center text-sm">
+                    <div
+                      className={`w-6 h-6 rounded-full ${onlineUser.avatar} flex items-center justify-center text-xs font-bold mr-2`}
+                    >
+                      {onlineUser.username.charAt(0).toUpperCase()}
+                    </div>
+                    <span className={onlineUser.id === user.id ? "text-purple-400 font-medium" : "text-gray-300"}>
+                      {onlineUser.username}
+                      {onlineUser.id === user.id && " (You)"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-gray-700">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <div
