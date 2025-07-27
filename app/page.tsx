@@ -101,16 +101,8 @@ export default function HomePage() {
 
           <div className="mt-12">
             <div className="mb-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold">All Games</h2>
-                  <p className="text-gray-400 mt-1">Browse our complete collection of games</p>
-                </div>
-                <div className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-full font-bold text-sm">
-                  <span>🎮</span>
-                  <span>{sortedGames.length} Games</span>
-                </div>
-              </div>
+              <h2 className="text-2xl font-bold">All Games</h2>
+              <p className="text-gray-400 mt-1">Browse our complete collection of games</p>
             </div>
             <GameGrid games={sortedGames} />
           </div>
