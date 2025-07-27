@@ -1,41 +1,130 @@
+import Link from "next/link"
+import { ChevronRight, Flame, Gamepad2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import FeaturedGames from "@/components/featured-games"
+import GameGrid from "@/components/game-grid"
+import RecentlyPlayed from "@/components/recently-played"
 import { games } from "@/data/games"
+import { sortGames } from "@/utils/sort-utils"
 
-export default function Home() {
+export default function HomePage() {
+  // Get featured games
+  const featuredGames = games.filter((game) => game.featured)
+
+  // Get popular games
+  const popularGames = games.filter((game) => game.popular).slice(0, 12)
+
+  // Get FNF games
+  const fnfGames = games
+    .filter(
+      (game) =>
+        game.title.toLowerCase().includes("fnf") ||
+        game.categories?.some((cat) => cat.toLowerCase() === "fnf") ||
+        game.title.toLowerCase().includes("friday night funkin"),
+    )
+    .slice(0, 6)
+
+  // Sort all games numerically and then alphabetically
+  const sortedGames = sortGames(games)
+
+  // Get recent games (last 12 added)
+  const recentGames = [...games].sort((a, b) => b.id - a.id).slice(0, 12)
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      {/* Hero Section */}
-      <section className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl lg:static lg:w-auto  lg:before:bg-gradient-radial lg:before:p-0 lg:after:bg-gradient-conic lg:after:from-sky-200 lg:after:via-[#0141ff] lg:after:opacity-40 before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#2200ff] after:dark:opacity-40 dark:lg:after:from-blue-900 dark:lg:via-blue-300 dark:lg:opacity-40">
-        <div>
-          <h1 className="text-4xl font-bold text-center">
-            Welcome to <span className="text-blue-600">GameSphere</span>
-          </h1>
-          <p className="mt-3 text-lg text-center">
-            Explore a universe of games. Discover new worlds, epic adventures, and thrilling challenges.
-          </p>
-        </div>
-      </section>
+    <main className="flex-1">
+      <div className="relative overflow-hidden bg-gradient-to-b from-gray-900 via-gray-900 to-black">
+        {/* Hero section with improved visual design */}
+        <div className="relative pt-10 pb-20 sm:py-24">
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute inset-0 bg-[url('/images/hero-bg.jpg')] bg-cover bg-center opacity-10"></div>
+            <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-black"></div>
+          </div>
 
-      {/* Game Counter Section */}
-      <section className="py-8">
-        <div className="text-center">
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-full font-bold text-lg shadow-lg">
-            <span className="text-2xl">🎮</span>
-            <span>{games.length} Games Available</span>
+          {/* Featured Games */}
+          <section className="relative z-10 py-12 bg-gradient-to-b from-black to-gray-900">
+            <div className="container mx-auto px-4">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-3xl font-bold text-white">
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
+                    Featured Games
+                  </span>
+                </h2>
+                <Link href="/popular" className="text-purple-400 hover:text-purple-300 text-sm flex items-center">
+                  View All <ChevronRight className="h-4 w-4 ml-1" />
+                </Link>
+              </div>
+              <FeaturedGames />
+            </div>
+          </section>
+
+          {/* Recently Played Games - positioned right after Featured Games */}
+          <div className="mt-12">
+            <RecentlyPlayed />
+          </div>
+
+          <div className="mt-12">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold flex items-center">
+                <Flame className="mr-2 h-5 w-5 text-orange-500" />
+                Popular Games
+              </h2>
+              <Link href="/popular">
+                <Button variant="link" className="text-purple-400 hover:text-purple-300">
+                  View All <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+            <GameGrid games={sortGames(popularGames)} />
+          </div>
+
+          <div className="mt-12">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold flex items-center">
+                <Gamepad2 className="mr-2 h-5 w-5" />
+                FNF Games
+              </h2>
+              <Link href="/categories/fnf">
+                <Button variant="link" className="text-purple-400 hover:text-purple-300">
+                  View All <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+            <GameGrid games={sortGames(fnfGames)} />
+          </div>
+
+          <div className="mt-12">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold">Recently Added</h2>
+            </div>
+            <GameGrid games={recentGames} />
+          </div>
+
+          <div className="mt-12">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold">All Games</h2>
+              <p className="text-gray-400 mt-1">Browse our complete collection of games</p>
+            </div>
+            <GameGrid games={sortedGames} />
+          </div>
+
+          {/* Skip Ad Button */}
+          <div className="fixed bottom-4 left-4 z-10">
+            <Button variant="outline" className="bg-black/80 border-gray-700 hover:bg-black">
+              Skip Ad
+            </Button>
+          </div>
+
+          {/* Game Controls */}
+          <div className="fixed bottom-4 right-4 z-10 flex gap-2">
+            <Button variant="outline" className="bg-black/80 border-gray-700 hover:bg-black">
+              Fullscreen
+            </Button>
+            <Button variant="outline" className="bg-black/80 border-gray-700 hover:bg-black">
+              Report Issue
+            </Button>
           </div>
         </div>
-      </section>
-
-      {/* Featured Games */}
-      <section className="py-16">
-        <h2 className="text-3xl font-semibold text-center mb-8">Featured Games</h2>
-        {/* Add game cards or a carousel here */}
-        <p className="text-center">Check out our hand-picked selection of games.</p>
-      </section>
-
-      {/* Footer */}
-      <footer className="flex justify-center items-center py-4">
-        <p className="text-gray-500">© {new Date().getFullYear()} GameSphere. All rights reserved.</p>
-      </footer>
+      </div>
     </main>
   )
 }
