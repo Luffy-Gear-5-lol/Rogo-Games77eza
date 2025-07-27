@@ -241,7 +241,7 @@ export const games: Game[] = [
     slug: "among-us",
     description:
       "Work together on a spaceship but beware of impostors in this social deduction game. Complete tasks as a crewmate or sabotage the ship and eliminate players as an impostor, then vote to eject suspected impostors.",
-    image: "/images/games/among-us.jpg",
+    image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Among_Us_cover_art.jpg-Q4LNAkPr25AOtTmvIrAnhmYjXNUZjv.jpeg", // Updated to use the new Among Us cover art
     categories: ["Social Deduction", "Multiplayer", "Mystery"],
     popular: true,
     playUrl: "https://seraph-eight-omega.vercel.app/games/amongus/index.html",
@@ -2306,7 +2306,7 @@ export const games: Game[] = [
    controls: "Arrow keys or WASD to hit notes in time with the music.",
    isWorking: true,
  },
- {
+  {
    id: 193,
    title: "Rammerhead",
    slug: "rammerhead",
