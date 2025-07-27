@@ -262,23 +262,25 @@ export default function GamePage() {
 
           {/* Game Credits integrated into main info section */}
           {credits && (
-            <GameCredits
-              modCredits={credits.modCredits}
-              originalCredits={credits.originalCredits}
-              additionalInfo={credits.additionalInfo}
-              songs={credits.songs}
-            />
+            <div className="mb-6 bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+              <GameCredits
+                modCredits={credits.modCredits}
+                originalCredits={credits.originalCredits}
+                additionalInfo={credits.additionalInfo}
+                songs={credits.songs}
+              />
+            </div>
           )}
 
           {/* YouTube-style rating system */}
           <div className="flex items-center justify-center md:justify-start gap-4 mt-4">
-            {" "}
-            {/* Added mt-4 for spacing */}
             <div className="flex items-center bg-gray-800/80 rounded-full px-1 py-1">
               <button
                 onClick={handleLike}
                 className={`flex items-center px-3 py-1 rounded-l-full transition-colors ${
-                  userVote === "like" ? "text-blue-400 bg-blue-500/50" : "text-gray-400 hover:text-white"
+                  userVote === "like"
+                    ? "text-white bg-blue-600 font-bold border border-blue-400"
+                    : "text-gray-400 hover:text-white hover:bg-gray-700"
                 }`}
                 aria-label="Like game"
               >
@@ -291,7 +293,9 @@ export default function GamePage() {
               <button
                 onClick={handleDislike}
                 className={`flex items-center px-3 py-1 rounded-r-full transition-colors ${
-                  userVote === "dislike" ? "text-blue-400 bg-blue-500/50" : "text-gray-400 hover:text-white"
+                  userVote === "dislike"
+                    ? "text-white bg-blue-600 font-bold border border-blue-400"
+                    : "text-gray-400 hover:text-white hover:bg-gray-700"
                 }`}
                 aria-label="Dislike game"
               >
