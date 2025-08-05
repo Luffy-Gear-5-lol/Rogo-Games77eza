@@ -1,27 +1,28 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useRef, useEffect, useCallback } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { filterProfanity, FilterLevel } from "@/utils/profanity-filter"
-import { Send, Hash, Settings, Users, Bell, PlusCircle, Smile, Paperclip, LogOut, RefreshCw } from "lucide-react"
-import { getCurrentUser, type User } from "@/utils/user-utils"
+import { FilterLevel } from "@/utils/profanity-filter"
 import {
-  getMessages,
-  saveMessage,
-  type ChatMessage,
-  addOnlineUser,
-  removeOnlineUser,
-  getOnlineUsers,
-  updateUserActivity,
-  type OnlineUser,
-  subscribeToChatEvents,
-  forceRefreshChatData,
-} from "@/utils/chat-storage"
+  Send,
+  Hash,
+  Settings,
+  Users,
+  Bell,
+  PlusCircle,
+  Smile,
+  Paperclip,
+  LogOut,
+  RefreshCw,
+  Wifi,
+  WifiOff,
+} from "lucide-react"
+import { getCurrentUser, type User } from "@/utils/user-utils"
+import { useChat } from "@/hooks/use-chat"
 import UserSetup from "@/components/user-setup"
 
 interface Channel {
@@ -66,162 +67,23 @@ export default function ChatPage() {
   ]
 
   const [user, setUser] = useState<User | null>(null)
-  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [newMessage, setNewMessage] = useState("")
   const [activeChannel, setActiveChannel] = useState<Channel>(channels[0])
-  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([])
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [lastMessageCount, setLastMessageCount] = useState(0)
-  const [connectionStatus, setConnectionStatus] = useState<"connected" | "disconnected" | "reconnecting">("connected")
-
   const scrollAreaRef = useRef<HTMLDivElement>(null)
-  const activityIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const unsubscribeRef = useRef<(() => void) | null>(null)
+
+  const { messages, onlineUsers, connectionStatus, isLoading, sendMessage, updateActivity } = useChat(
+    user,
+    activeChannel.id,
+  )
 
   // Initialize user on component mount
   useEffect(() => {
     const currentUser = getCurrentUser()
     if (currentUser) {
       setUser(currentUser)
-      addOnlineUser(currentUser, activeChannel.id)
       console.log("User initialized:", currentUser)
     }
-  }, [activeChannel.id])
-
-  // Load messages and users for active channel
-  const loadChatData = useCallback(() => {
-    if (!user) return
-
-    try {
-      const channelMessages = getMessages(activeChannel.id)
-      const channelUsers = getOnlineUsers(activeChannel.id)
-
-      setMessages(channelMessages)
-      setOnlineUsers(channelUsers)
-
-      // Update connection status based on data freshness
-      if (channelMessages.length !== lastMessageCount) {
-        setConnectionStatus("connected")
-        setLastMessageCount(channelMessages.length)
-      }
-
-      console.log("Chat data loaded:", {
-        messages: channelMessages.length,
-        users: channelUsers.length,
-        channel: activeChannel.id,
-      })
-    } catch (error) {
-      console.error("Error loading chat data:", error)
-      setConnectionStatus("disconnected")
-    }
-  }, [user, activeChannel.id, lastMessageCount])
-
-  // Set up real-time event listeners
-  useEffect(() => {
-    if (!user) return
-
-    console.log("Setting up event listeners for channel:", activeChannel.id)
-
-    // Initial load
-    loadChatData()
-
-    // Subscribe to chat events
-    unsubscribeRef.current = subscribeToChatEvents((event, data) => {
-      console.log("Chat event received:", event, data)
-
-      if (event === "message-added" && data.channel === activeChannel.id) {
-        loadChatData()
-      } else if (event === "users-updated") {
-        const channelUsers = getOnlineUsers(activeChannel.id)
-        setOnlineUsers(channelUsers)
-      } else if (event === "force-refresh" && data.channel === activeChannel.id) {
-        setMessages(data.messages)
-        setOnlineUsers(data.users)
-      }
-    })
-
-    // Set up multiple event listeners for maximum compatibility
-    const handleStorageChange = (e: StorageEvent) => {
-      console.log("Storage event:", e.key, e.newValue ? "has data" : "no data")
-
-      if (e.key === `rogo-chat-messages-${activeChannel.id}` || e.key === "rogo-chat-online-users") {
-        setTimeout(loadChatData, 100) // Small delay to ensure data is written
-      }
-    }
-
-    const handleCustomEvent = (e: CustomEvent) => {
-      console.log("Custom event:", e.detail)
-
-      if (e.detail.type === "message" && e.detail.channel === activeChannel.id) {
-        loadChatData()
-      } else if (e.detail.type === "users") {
-        const channelUsers = getOnlineUsers(activeChannel.id)
-        setOnlineUsers(channelUsers)
-      }
-    }
-
-    const handleVisibilityChange = () => {
-      if (!document.hidden && user) {
-        console.log("Tab became visible, refreshing data")
-        updateUserActivity(user.id, activeChannel.id)
-        loadChatData()
-      }
-    }
-
-    const handleFocus = () => {
-      if (user) {
-        console.log("Window focused, refreshing data")
-        updateUserActivity(user.id, activeChannel.id)
-        loadChatData()
-      }
-    }
-
-    // Add all event listeners
-    window.addEventListener("storage", handleStorageChange)
-    window.addEventListener("rogo-chat-update", handleCustomEvent as EventListener)
-    document.addEventListener("visibilitychange", handleVisibilityChange)
-    window.addEventListener("focus", handleFocus)
-
-    // Set up aggressive polling for real-time updates
-    refreshIntervalRef.current = setInterval(() => {
-      loadChatData()
-      if (user) {
-        updateUserActivity(user.id, activeChannel.id)
-      }
-    }, 1000) // Poll every second
-
-    return () => {
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current()
-      }
-      window.removeEventListener("storage", handleStorageChange)
-      window.removeEventListener("rogo-chat-update", handleCustomEvent as EventListener)
-      document.removeEventListener("visibilitychange", handleVisibilityChange)
-      window.removeEventListener("focus", handleFocus)
-
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current)
-      }
-    }
-  }, [activeChannel.id, user, loadChatData])
-
-  // Set up user activity tracking
-  useEffect(() => {
-    if (!user) return
-
-    // Update user activity every 5 seconds (more frequent)
-    activityIntervalRef.current = setInterval(() => {
-      updateUserActivity(user.id, activeChannel.id)
-      addOnlineUser(user, activeChannel.id) // Refresh user presence
-    }, 5000)
-
-    return () => {
-      if (activityIntervalRef.current) {
-        clearInterval(activityIntervalRef.current)
-      }
-    }
-  }, [user, activeChannel.id])
+  }, [])
 
   // Scroll to bottom on new message
   useEffect(() => {
@@ -233,100 +95,52 @@ export default function ChatPage() {
     }
   }, [messages])
 
-  // Clean up on unmount
-  useEffect(() => {
-    return () => {
-      if (user) {
-        removeOnlineUser(user.id)
-      }
-      if (activityIntervalRef.current) {
-        clearInterval(activityIntervalRef.current)
-      }
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current)
-      }
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current()
-      }
-    }
-  }, [user])
-
-  const handleUserCreated = useCallback(
-    (newUser: User) => {
-      setUser(newUser)
-      addOnlineUser(newUser, activeChannel.id)
-      console.log("New user created:", newUser)
-    },
-    [activeChannel.id],
-  )
+  const handleUserCreated = useCallback((newUser: User) => {
+    setUser(newUser)
+    console.log("New user created:", newUser)
+  }, [])
 
   const handleSendMessage = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault()
       if (newMessage.trim() && user) {
-        const filteredMessage = filterProfanity(newMessage.trim(), activeChannel.filterLevel)
-        const message: ChatMessage = {
-          id: `msg_${Date.now()}_${user.id}_${Math.random().toString(36).substr(2, 9)}`,
-          userId: user.id,
-          username: user.username,
-          avatar: user.avatar,
-          text: filteredMessage,
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          channel: activeChannel.id,
-          serverTimestamp: Date.now(),
+        const success = await sendMessage(newMessage, activeChannel.filterLevel)
+        if (success) {
+          setNewMessage("")
+          updateActivity()
         }
-
-        console.log("Sending message:", message)
-        saveMessage(message)
-        setNewMessage("")
-
-        // Update user activity
-        updateUserActivity(user.id, activeChannel.id)
-
-        // Force immediate refresh
-        setTimeout(loadChatData, 50)
       }
     },
-    [newMessage, user, activeChannel, loadChatData],
+    [newMessage, user, activeChannel.filterLevel, sendMessage, updateActivity],
   )
 
   const changeChannel = useCallback(
     (channel: Channel) => {
       console.log("Changing channel from", activeChannel.id, "to", channel.id)
       setActiveChannel(channel)
-      if (user) {
-        addOnlineUser(user, channel.id)
-      }
     },
-    [activeChannel.id, user],
+    [activeChannel.id],
   )
 
   const handleLogout = useCallback(() => {
     if (user) {
-      removeOnlineUser(user.id)
       localStorage.removeItem("rogo-chat-user")
       setUser(null)
       console.log("User logged out")
     }
   }, [user])
 
-  const handleForceRefresh = useCallback(() => {
-    setIsRefreshing(true)
-    console.log("Force refreshing chat data")
-
-    forceRefreshChatData(activeChannel.id)
-    loadChatData()
-
-    setTimeout(() => {
-      setIsRefreshing(false)
-      setConnectionStatus("connected")
-    }, 1000)
-  }, [activeChannel.id, loadChatData])
+  const handleRefresh = useCallback(() => {
+    window.location.reload()
+  }, [])
 
   // Show user setup if no user is logged in
   if (!user) {
     return <UserSetup onUserCreated={handleUserCreated} />
   }
+
+  const channelUsers = onlineUsers.filter((u) => u.channel === activeChannel.id)
+  const ConnectionIcon = connectionStatus === "connected" ? Wifi : WifiOff
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
@@ -335,27 +149,27 @@ export default function ChatPage() {
           <h1 className="text-3xl font-bold">Rogo Chat</h1>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <div
-                className={`w-2 h-2 rounded-full ${
+              <ConnectionIcon
+                className={`w-4 h-4 ${
                   connectionStatus === "connected"
-                    ? "bg-green-500"
-                    : connectionStatus === "reconnecting"
-                      ? "bg-yellow-500"
-                      : "bg-red-500"
+                    ? "text-green-500"
+                    : connectionStatus === "connecting"
+                      ? "text-yellow-500"
+                      : "text-red-500"
                 }`}
               />
               <span className="text-sm text-gray-400">
-                {onlineUsers.length} user{onlineUsers.length !== 1 ? "s" : ""} online
+                {channelUsers.length} user{channelUsers.length !== 1 ? "s" : ""} online
               </span>
+              <span className="text-xs text-gray-500">({connectionStatus})</span>
             </div>
             <Button
-              onClick={handleForceRefresh}
+              onClick={handleRefresh}
               variant="outline"
               size="sm"
-              disabled={isRefreshing}
               className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-transparent"
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
+              <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
             <Button
@@ -405,12 +219,12 @@ export default function ChatPage() {
 
             {/* Online Users List */}
             <div className="mt-4 pt-4 border-t border-gray-700">
-              <h3 className="text-sm font-semibold text-gray-400 mb-2">Online Users ({onlineUsers.length})</h3>
+              <h3 className="text-sm font-semibold text-gray-400 mb-2">Online Users ({channelUsers.length})</h3>
               <div className="space-y-1 max-h-32 overflow-y-auto">
-                {onlineUsers.length === 0 ? (
+                {channelUsers.length === 0 ? (
                   <p className="text-xs text-gray-500 italic">No users online</p>
                 ) : (
-                  onlineUsers.map((onlineUser) => (
+                  channelUsers.map((onlineUser) => (
                     <div key={onlineUser.id} className="flex items-center text-sm">
                       <div
                         className={`w-6 h-6 rounded-full ${onlineUser.avatar} flex items-center justify-center text-xs font-bold mr-2`}
@@ -477,7 +291,13 @@ export default function ChatPage() {
             {/* Messages */}
             <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
               <div className="space-y-4">
-                {messages.length === 0 && (
+                {isLoading && (
+                  <div className="text-center text-gray-500 italic py-4">
+                    <RefreshCw className="h-4 w-4 animate-spin mx-auto mb-2" />
+                    Loading messages...
+                  </div>
+                )}
+                {!isLoading && messages.length === 0 && (
                   <div className="text-center text-gray-500 italic py-8">
                     <p>No messages yet. Say hello!</p>
                     <p className="text-xs mt-2">Messages will appear here in real-time</p>
@@ -516,6 +336,7 @@ export default function ChatPage() {
                     onChange={(e) => setNewMessage(e.target.value)}
                     className="bg-gray-700 border-gray-600 focus:ring-purple-500 pr-20"
                     maxLength={500}
+                    disabled={connectionStatus !== "connected"}
                   />
                   <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
                     <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-full">
@@ -526,7 +347,11 @@ export default function ChatPage() {
                     </Button>
                   </div>
                 </div>
-                <Button type="submit" className="bg-purple-600 hover:bg-purple-700" disabled={!newMessage.trim()}>
+                <Button
+                  type="submit"
+                  className="bg-purple-600 hover:bg-purple-700"
+                  disabled={!newMessage.trim() || connectionStatus !== "connected"}
+                >
                   <Send className="h-4 w-4" />
                   <span className="sr-only">Send message</span>
                 </Button>
@@ -542,13 +367,13 @@ export default function ChatPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span>{newMessage.length}/500</span>
-                  <div
-                    className={`w-2 h-2 rounded-full ${
+                  <ConnectionIcon
+                    className={`w-3 h-3 ${
                       connectionStatus === "connected"
-                        ? "bg-green-500"
-                        : connectionStatus === "reconnecting"
-                          ? "bg-yellow-500"
-                          : "bg-red-500"
+                        ? "text-green-500"
+                        : connectionStatus === "connecting"
+                          ? "text-yellow-500"
+                          : "text-red-500"
                     }`}
                   />
                 </div>
