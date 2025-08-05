@@ -1,6 +1,7 @@
 // WebSocket server implementation inspired by Discord's architecture
-import { WebSocketServer, WebSocket } from "ws"
-import { createServer } from "http"
+import WebSocket from "ws"
+import http from "http"
+import { filterProfanity, FilterLevel } from "@/utils/profanity-filter"
 
 interface ChatMessage {
   id: string
@@ -8,7 +9,7 @@ interface ChatMessage {
   username: string
   avatar: string
   content: string
-  timestamp: number
+  timestamp: string
   channelId: string
   type: "message" | "system"
 }
@@ -19,6 +20,7 @@ interface User {
   avatar: string
   status: "online" | "away" | "busy" | "offline"
   lastSeen: number
+  channelId: string
 }
 
 interface Channel {
@@ -26,6 +28,8 @@ interface Channel {
   name: string
   type: "text" | "voice"
   users: Set<string>
+  filterLevel: FilterLevel
+  messages: ChatMessage[]
 }
 
 interface WebSocketConnection {
@@ -36,9 +40,24 @@ interface WebSocketConnection {
   lastPong: number
 }
 
+enum OpCode {
+  DISPATCH = 0, // Server -> Client: Events
+  IDENTIFY = 1, // Client -> Server: Authentication
+  HEARTBEAT = 2, // Client -> Server: Connection alive
+  PRESENCE_UPDATE = 3, // Client -> Server: Status update
+  MESSAGE_CREATE = 4, // Client -> Server: Send message
+  CHANNEL_JOIN = 5, // Client -> Server: Join channel
+  TYPING_START = 6, // Client -> Server: User typing
+  ERROR = 7, // Server -> Client: Error
+  RECONNECT = 8, // Server -> Client: Reconnect request
+  CHANNEL_LIST = 9, // Server -> Client: Available channels
+  USER_LIST = 10, // Server -> Client: Online users
+  MESSAGE_LIST = 11, // Server -> Client: Message history
+}
+
 class DiscordLikeChatServer {
   private static instance: DiscordLikeChatServer
-  private wss: WebSocketServer | null = null
+  private wss: WebSocket.Server | null = null
   private connections = new Map<string, WebSocketConnection>()
   private users = new Map<string, User>()
   private channels = new Map<string, Channel>()
@@ -53,8 +72,8 @@ class DiscordLikeChatServer {
   }
 
   initialize(port = 8080) {
-    const server = createServer()
-    this.wss = new WebSocketServer({ server })
+    const server = http.createServer()
+    this.wss = new WebSocket.Server({ server })
 
     // Initialize default channels
     this.initializeChannels()
@@ -62,7 +81,7 @@ class DiscordLikeChatServer {
     this.wss.on("connection", (ws: WebSocket, request) => {
       console.log("New WebSocket connection established")
 
-      ws.on("message", (data: Buffer) => {
+      ws.on("message", (data: WebSocket.Data) => {
         try {
           const message = JSON.parse(data.toString())
           this.handleMessage(ws, message)
@@ -90,9 +109,12 @@ class DiscordLikeChatServer {
 
       // Send initial handshake
       this.sendMessage(ws, {
-        op: 10, // Hello opcode (Discord-like)
+        op: OpCode.DISPATCH,
         d: {
-          heartbeat_interval: this.heartbeatInterval,
+          event: "HELLO",
+          data: {
+            message: "Welcome to Rogo Chat!",
+          },
         },
       })
     })
@@ -107,42 +129,89 @@ class DiscordLikeChatServer {
 
   private initializeChannels() {
     const defaultChannels = [
-      { id: "general", name: "general", type: "text" as const },
-      { id: "gaming", name: "gaming", type: "text" as const },
-      { id: "memes", name: "memes", type: "text" as const },
-      { id: "after-dark", name: "after-dark", type: "text" as const },
-      { id: "nsfw-chat", name: "nsfw-chat", type: "text" as const },
+      {
+        id: "general",
+        name: "general",
+        type: "text" as const,
+        users: new Set(),
+        filterLevel: FilterLevel.PG13,
+        messages: [],
+      },
+      {
+        id: "gaming",
+        name: "gaming",
+        type: "text" as const,
+        users: new Set(),
+        filterLevel: FilterLevel.PG13,
+        messages: [],
+      },
+      {
+        id: "memes",
+        name: "memes",
+        type: "text" as const,
+        users: new Set(),
+        filterLevel: FilterLevel.PG13,
+        messages: [],
+      },
+      {
+        id: "after-dark",
+        name: "after-dark",
+        type: "text" as const,
+        users: new Set(),
+        filterLevel: FilterLevel.R,
+        messages: [],
+      },
+      {
+        id: "nsfw-chat",
+        name: "nsfw-chat",
+        type: "text" as const,
+        users: new Set(),
+        filterLevel: FilterLevel.R,
+        messages: [],
+      },
     ]
 
     defaultChannels.forEach((channel) => {
-      this.channels.set(channel.id, {
-        ...channel,
-        users: new Set(),
-      })
-      this.messages.set(channel.id, [])
+      this.channels.set(channel.id, channel)
+      this.messages.set(channel.id, channel.messages)
     })
   }
 
   private handleMessage(ws: WebSocket, message: any) {
-    const { op, d, t } = message
+    const { op, d } = message
 
     switch (op) {
-      case 1: // Heartbeat
-        this.handleHeartbeat(ws)
-        break
-      case 2: // Identify
+      case OpCode.IDENTIFY:
         this.handleIdentify(ws, d)
         break
-      case 0: // Dispatch
-        this.handleDispatch(ws, t, d)
+      case OpCode.HEARTBEAT:
+        this.handleHeartbeat(d)
+        break
+      case OpCode.MESSAGE_CREATE:
+        this.handleMessageCreate(d)
+        break
+      case OpCode.CHANNEL_JOIN:
+        this.handleChannelJoin(ws, d)
+        break
+      case OpCode.TYPING_START:
+        this.handleTypingStart(d)
+        break
+      case OpCode.PRESENCE_UPDATE:
+        this.handlePresenceUpdate(d)
         break
       default:
-        console.log("Unknown opcode:", op)
+        this.sendError(ws, "Unknown opcode")
     }
   }
 
-  private handleHeartbeat(ws: WebSocket) {
-    this.sendMessage(ws, { op: 11 }) // Heartbeat ACK
+  private handleHeartbeat(data: any) {
+    const { userId } = data
+    const user = this.users.get(userId)
+
+    if (user) {
+      user.lastSeen = Date.now()
+      this.users.set(userId, user)
+    }
   }
 
   private handleIdentify(ws: WebSocket, data: any) {
@@ -181,6 +250,7 @@ class DiscordLikeChatServer {
       avatar: user.avatar || "bg-purple-500",
       status: "online",
       lastSeen: Date.now(),
+      channelId: channel,
     })
 
     // Add user to channel
@@ -191,16 +261,18 @@ class DiscordLikeChatServer {
 
     // Send ready event
     this.sendMessage(ws, {
-      op: 0,
-      t: "READY",
+      op: OpCode.DISPATCH,
       d: {
-        user: this.users.get(user.id),
-        channels: Array.from(this.channels.values()).map((ch) => ({
-          id: ch.id,
-          name: ch.name,
-          type: ch.type,
-        })),
-        session_id: connectionId,
+        event: "READY",
+        data: {
+          user: this.users.get(user.id),
+          channels: Array.from(this.channels.values()).map((ch) => ({
+            id: ch.id,
+            name: ch.name,
+            type: ch.type,
+            filterLevel: ch.filterLevel,
+          })),
+        },
       },
     })
 
@@ -239,13 +311,19 @@ class DiscordLikeChatServer {
     const user = this.users.get(connection.userId)
     if (!user) return
 
+    const channelData = this.channels.get(connection.channelId)
+    if (!channelData) return
+
+    // Filter content based on channel settings
+    const filteredContent = filterProfanity(content, channelData.filterLevel)
+
     const message: ChatMessage = {
-      id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       userId: user.id,
       username: user.username,
       avatar: user.avatar,
-      content: content.trim(),
-      timestamp: Date.now(),
+      content: filteredContent,
+      timestamp: new Date().toISOString(),
       channelId: connection.channelId,
       type: "message",
     }
@@ -263,13 +341,16 @@ class DiscordLikeChatServer {
 
     // Broadcast to all users in channel
     this.broadcastToChannel(connection.channelId, {
-      op: 0,
-      t: "MESSAGE_CREATE",
-      d: message,
+      op: OpCode.DISPATCH,
+      d: {
+        event: "MESSAGE_CREATE",
+        data: message,
+      },
     })
 
     // Update user activity
     user.lastSeen = Date.now()
+    this.users.set(connection.userId, user)
 
     console.log(`Message from ${user.username} in ${connection.channelId}: ${content}`)
   }
@@ -307,13 +388,14 @@ class DiscordLikeChatServer {
     this.broadcastToChannel(
       connection.channelId,
       {
-        op: 0,
-        t: "TYPING_START",
+        op: OpCode.DISPATCH,
         d: {
-          user_id: user.id,
-          username: user.username,
-          channel_id: connection.channelId,
-          timestamp: Date.now(),
+          event: "TYPING_START",
+          data: {
+            userId: user.id,
+            username: user.username,
+            channel: connection.channelId,
+          },
         },
       },
       connection.userId,
@@ -327,6 +409,7 @@ class DiscordLikeChatServer {
     if (user && ["online", "away", "busy"].includes(status)) {
       user.status = status
       user.lastSeen = Date.now()
+      this.users.set(connection.userId, user)
       this.broadcastPresenceUpdate(connection.userId)
     }
   }
@@ -335,10 +418,9 @@ class DiscordLikeChatServer {
     const messages = this.messages.get(channelId) || []
 
     this.sendMessage(ws, {
-      op: 0,
-      t: "MESSAGE_HISTORY",
+      op: OpCode.MESSAGE_LIST,
       d: {
-        channel_id: channelId,
+        channel: channelId,
         messages: messages.slice(-100), // Send last 100 messages
       },
     })
@@ -360,11 +442,13 @@ class DiscordLikeChatServer {
         .filter(Boolean)
 
       this.broadcastToChannel(channelId, {
-        op: 0,
-        t: "PRESENCE_UPDATE",
+        op: OpCode.DISPATCH,
         d: {
-          channel_id: channelId,
-          users: channelUsers,
+          event: "PRESENCE_UPDATE",
+          data: {
+            channel_id: channelId,
+            users: channelUsers,
+          },
         },
       })
     })
@@ -391,8 +475,7 @@ class DiscordLikeChatServer {
 
   private sendError(ws: WebSocket, error: string) {
     this.sendMessage(ws, {
-      op: 0,
-      t: "ERROR",
+      op: OpCode.ERROR,
       d: { message: error },
     })
   }
