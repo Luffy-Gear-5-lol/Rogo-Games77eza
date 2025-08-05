@@ -6,6 +6,7 @@ export interface User {
   avatar: string
   status: "online" | "away" | "busy" | "offline"
   channel: string
+  lastSeen: number
 }
 
 export interface Message {
@@ -51,7 +52,13 @@ const initialState: ChatState = {
   error: null,
   currentUser: null,
   activeChannel: null,
-  channels: [],
+  channels: [
+    { id: "general", name: "general", type: "text" },
+    { id: "gaming", name: "gaming", type: "text" },
+    { id: "memes", name: "memes", type: "text" },
+    { id: "after-dark", name: "after-dark", type: "text" },
+    { id: "nsfw-chat", name: "nsfw-chat", type: "text" },
+  ],
   messages: [],
   users: [],
   typingUsers: [],
@@ -63,20 +70,24 @@ const chatSlice = createSlice({
   name: "chat",
   initialState,
   reducers: {
-    setConnecting: (state) => {
-      state.connecting = true
-      state.error = null
+    setConnecting: (state, action: PayloadAction<boolean>) => {
+      state.connecting = action.payload
+      if (action.payload) {
+        state.error = null
+      }
     },
     setConnected: (state, action: PayloadAction<boolean>) => {
       state.connected = action.payload
       state.connecting = false
       if (action.payload) {
         state.reconnectAttempts = 0
+        state.error = null
       }
     },
     setError: (state, action: PayloadAction<string>) => {
       state.error = action.payload
       state.connecting = false
+      state.connected = false
     },
     setCurrentUser: (state, action: PayloadAction<User>) => {
       state.currentUser = action.payload
@@ -91,13 +102,30 @@ const chatSlice = createSlice({
       state.messages = action.payload
     },
     addMessage: (state, action: PayloadAction<Message>) => {
-      // Only add if not already in the list
-      if (!state.messages.some((m) => m.id === action.payload.id)) {
+      // Only add if not already in the list and is for current channel
+      const exists = state.messages.some((m) => m.id === action.payload.id)
+      if (!exists && action.payload.channel === state.activeChannel?.id) {
         state.messages.push(action.payload)
+
+        // Keep only last 100 messages
+        if (state.messages.length > 100) {
+          state.messages = state.messages.slice(-100)
+        }
       }
     },
     setUsers: (state, action: PayloadAction<User[]>) => {
       state.users = action.payload
+    },
+    addUser: (state, action: PayloadAction<User>) => {
+      const existingIndex = state.users.findIndex((u) => u.id === action.payload.id)
+      if (existingIndex >= 0) {
+        state.users[existingIndex] = action.payload
+      } else {
+        state.users.push(action.payload)
+      }
+    },
+    removeUser: (state, action: PayloadAction<string>) => {
+      state.users = state.users.filter((u) => u.id !== action.payload)
     },
     addTypingUser: (state, action: PayloadAction<TypingUser>) => {
       // Remove existing typing indicator for this user
@@ -114,14 +142,18 @@ const chatSlice = createSlice({
     },
     cleanupTypingUsers: (state) => {
       const now = Date.now()
-      state.typingUsers = state.typingUsers.filter((u) => now - u.timestamp < 3000)
+      state.typingUsers = state.typingUsers.filter((u) => now - u.timestamp < 5000)
     },
     incrementReconnectAttempts: (state) => {
       state.reconnectAttempts += 1
     },
+    resetReconnectAttempts: (state) => {
+      state.reconnectAttempts = 0
+    },
     resetChat: (state) => {
       return {
         ...initialState,
+        channels: state.channels,
         reconnectAttempts: state.reconnectAttempts,
       }
     },
@@ -138,11 +170,14 @@ export const {
   setMessages,
   addMessage,
   setUsers,
+  addUser,
+  removeUser,
   addTypingUser,
   removeTypingUser,
   clearTypingUsers,
   cleanupTypingUsers,
   incrementReconnectAttempts,
+  resetReconnectAttempts,
   resetChat,
 } = chatSlice.actions
 

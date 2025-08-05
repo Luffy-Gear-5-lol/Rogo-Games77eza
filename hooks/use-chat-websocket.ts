@@ -9,15 +9,16 @@ import {
   setError,
   setCurrentUser,
   setActiveChannel,
-  setChannels,
   setMessages,
   addMessage,
   setUsers,
   addTypingUser,
   cleanupTypingUsers,
   incrementReconnectAttempts,
-  resetChat,
+  resetReconnectAttempts,
+  setChannels, // Declare setChannels here
   type User,
+  type Message,
 } from "@/store/chat-slice"
 import type { RootState } from "@/store/store"
 
@@ -37,12 +38,22 @@ enum OpCode {
   MESSAGE_LIST = 11, // Server -> Client: Message history
 }
 
+// Use localStorage for persistence since WebSocket server isn't available
+const STORAGE_KEYS = {
+  MESSAGES: "rogo-chat-messages",
+  USERS: "rogo-chat-users",
+  TYPING: "rogo-chat-typing",
+}
+
 export function useChatWebSocket() {
   const dispatch = useDispatch()
   const wsRef = useRef<WebSocket | null>(null)
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const typingCleanupIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const activityIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   const {
     connected,
@@ -299,27 +310,42 @@ export function useChatWebSocket() {
         return false
       }
 
-      dispatch(resetChat())
+      dispatch(resetReconnectAttempts())
 
-      sendMessage({
-        op: OpCode.CHANNEL_JOIN,
-        d: {
-          userId: currentUser.id,
-          channel: channelId,
-        },
-      })
+      // Simulate connection delay
+      setTimeout(() => {
+        try {
+          // Set current user
+          dispatch(setCurrentUser({ ...currentUser, channel: channelId, lastSeen: Date.now() }))
 
-      dispatch(
-        setActiveChannel({
-          id: channelId,
-          name: channelId,
-          type: "text",
-        }),
-      )
+          // Set active channel
+          dispatch(setActiveChannel(channel))
+
+          // Load messages for channel
+          const channelMessages = getStoredMessages(channelId)
+          dispatch(setMessages(channelMessages))
+
+          // Update users list
+          const onlineUsers = getStoredUsers()
+          const channelUsers = onlineUsers.filter((u) => u.channel === channelId && isUserActive(u))
+          dispatch(setUsers(channelUsers))
+
+          // Start polling for updates
+          startPolling(channelId)
+
+          // Start activity tracking
+          startActivityTracking(currentUser.id, channelId)
+
+          console.log(`Changed to channel: ${channelId}`)
+        } catch (err) {
+          console.error("Failed to change channel:", err)
+          return false
+        }
+      }, 1000)
 
       return true
     },
-    [currentUser, connected, channels, dispatch, sendMessage],
+    [currentUser, connected, channels, dispatch],
   )
 
   // Send typing indicator
@@ -337,7 +363,106 @@ export function useChatWebSocket() {
     })
   }, [currentUser, activeChannel, sendMessage])
 
-  // Clean up on unmount
+  // Start polling for real-time updates
+  const startPolling = useCallback(
+    (channelId: string) => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+      }
+
+      pollIntervalRef.current = setInterval(() => {
+        try {
+          // Update messages
+          const channelMessages = getStoredMessages(channelId)
+          dispatch(setMessages(channelMessages))
+
+          // Update users
+          const onlineUsers = getStoredUsers()
+          const channelUsers = onlineUsers.filter((u) => u.channel === channelId && isUserActive(u))
+          dispatch(setUsers(channelUsers))
+
+          // Update typing users
+          const typingData = getStoredTyping(channelId)
+          const activeTyping = typingData.filter((t) => Date.now() - t.timestamp < 5000)
+          setStoredTyping(channelId, activeTyping)
+
+          // Clean up typing indicators
+          dispatch(cleanupTypingUsers())
+        } catch (err) {
+          console.error("Polling error:", err)
+        }
+      }, 2000) // Poll every 2 seconds
+    },
+    [dispatch],
+  )
+
+  // Start activity tracking
+  const startActivityTracking = useCallback((userId: string, channelId: string) => {
+    if (activityIntervalRef.current) {
+      clearInterval(activityIntervalRef.current)
+    }
+
+    activityIntervalRef.current = setInterval(() => {
+      updateUserActivity(userId, channelId)
+    }, 10000) // Update every 10 seconds
+  }, [])
+
+  // Update user activity
+  const updateUserActivity = useCallback((userId: string, channelId: string) => {
+    try {
+      const onlineUsers = getStoredUsers()
+      const userIndex = onlineUsers.findIndex((u) => u.id === userId)
+      if (userIndex >= 0) {
+        onlineUsers[userIndex].lastSeen = Date.now()
+        onlineUsers[userIndex].channel = channelId
+        setStoredUsers(onlineUsers)
+
+        // Trigger storage event for other tabs
+        window.dispatchEvent(
+          new StorageEvent("storage", {
+            key: STORAGE_KEYS.USERS,
+            newValue: JSON.stringify(onlineUsers),
+          }),
+        )
+      }
+    } catch (err) {
+      console.error("Failed to update user activity:", err)
+    }
+  }, [])
+
+  // Listen for storage events (cross-tab communication)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (!activeChannel) return
+
+      try {
+        if (e.key === `${STORAGE_KEYS.MESSAGES}-${activeChannel.id}` && e.newValue) {
+          const messages = JSON.parse(e.newValue)
+          dispatch(setMessages(messages))
+        } else if (e.key === STORAGE_KEYS.USERS && e.newValue) {
+          const allUsers = JSON.parse(e.newValue)
+          const channelUsers = allUsers.filter((u: User) => u.channel === activeChannel.id && isUserActive(u))
+          dispatch(setUsers(channelUsers))
+        } else if (e.key === `${STORAGE_KEYS.TYPING}-${activeChannel.id}` && e.newValue) {
+          const typingData = JSON.parse(e.newValue)
+          const activeTyping = typingData.filter((t: any) => Date.now() - t.timestamp < 5000)
+          // Update typing users in state
+          activeTyping.forEach((t: any) => {
+            if (t.userId !== currentUser?.id) {
+              dispatch(addTypingUser(t))
+            }
+          })
+        }
+      } catch (err) {
+        console.error("Storage event error:", err)
+      }
+    }
+
+    window.addEventListener("storage", handleStorageChange)
+    return () => window.removeEventListener("storage", handleStorageChange)
+  }, [activeChannel, currentUser, dispatch])
+
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (wsRef.current) {
@@ -355,8 +480,27 @@ export function useChatWebSocket() {
       if (typingCleanupIntervalRef.current) {
         clearInterval(typingCleanupIntervalRef.current)
       }
+
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+      }
+
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+
+      if (activityIntervalRef.current) {
+        clearInterval(activityIntervalRef.current)
+      }
+
+      // Remove user from online list
+      if (currentUser) {
+        const onlineUsers = getStoredUsers()
+        const filteredUsers = onlineUsers.filter((u) => u.id !== currentUser.id)
+        setStoredUsers(filteredUsers)
+      }
     }
-  }, [])
+  }, [currentUser])
 
   return {
     connected,
@@ -366,8 +510,8 @@ export function useChatWebSocket() {
     activeChannel,
     channels,
     messages,
-    users,
-    typingUsers,
+    users: users.filter((u) => u.id !== currentUser?.id), // Don't show current user in list
+    typingUsers: typingUsers.filter((u) => u.userId !== currentUser?.id), // Don't show own typing
     reconnectAttempts,
     maxReconnectAttempts,
     connect,
@@ -375,4 +519,62 @@ export function useChatWebSocket() {
     changeChannel,
     handleTyping,
   }
+}
+
+// Helper functions for localStorage
+function getStoredMessages(channelId: string): Message[] {
+  try {
+    const stored = localStorage.getItem(`${STORAGE_KEYS.MESSAGES}-${channelId}`)
+    return stored ? JSON.parse(stored) : []
+  } catch {
+    return []
+  }
+}
+
+function setStoredMessages(channelId: string, messages: Message[]) {
+  try {
+    localStorage.setItem(`${STORAGE_KEYS.MESSAGES}-${channelId}`, JSON.stringify(messages))
+  } catch (err) {
+    console.error("Failed to store messages:", err)
+  }
+}
+
+function getStoredUsers(): User[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.USERS)
+    return stored ? JSON.parse(stored) : []
+  } catch {
+    return []
+  }
+}
+
+function setStoredUsers(users: User[]) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users))
+  } catch (err) {
+    console.error("Failed to store users:", err)
+  }
+}
+
+function getStoredTyping(channelId: string): any[] {
+  try {
+    const stored = localStorage.getItem(`${STORAGE_KEYS.TYPING}-${channelId}`)
+    return stored ? JSON.parse(stored) : []
+  } catch {
+    return []
+  }
+}
+
+function setStoredTyping(channelId: string, typing: any[]) {
+  try {
+    localStorage.setItem(`${STORAGE_KEYS.TYPING}-${channelId}`, JSON.stringify(typing))
+  } catch (err) {
+    console.error("Failed to store typing data:", err)
+  }
+}
+
+function isUserActive(user: User): boolean {
+  const now = Date.now()
+  const timeout = 60000 // 1 minute
+  return now - user.lastSeen < timeout
 }
