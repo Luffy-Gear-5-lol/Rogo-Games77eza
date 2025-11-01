@@ -22,8 +22,6 @@ import { isAdmin } from "@/utils/admin-utils"
 import GameComplaintForm from "@/components/game-complaint-form"
 import { GameLoading } from "@/components/game-loading"
 import GameLanguages from "@/components/game-languages"
-import { useGameProgress } from "@/hooks/use-game-progress"
-import { addToRecentlyPlayed } from "@/utils/recently-played-utils"
 
 interface GamePlayProps {
   params: {
@@ -41,7 +39,6 @@ export default function GamePlay({ params }: GamePlayProps) {
   const [likes, setLikes] = useState(Math.floor(Math.random() * 1000))
   const [viewCount, setViewCount] = useState(0)
   const [showComplaintForm, setShowComplaintForm] = useState(false)
-  const { recordGamePlay, hasPlayedGame } = useGameProgress()
   const showViewCount = isAdmin()
 
   useEffect(() => {
@@ -86,15 +83,11 @@ export default function GamePlay({ params }: GamePlayProps) {
     return () => document.removeEventListener("fullscreenchange", exitFullscreen)
   }, [])
 
-  const handleStartGame = () => {
-    setGameStarted(true)
-    recordGamePlay(gameId)
-    addToRecentlyPlayed(gameId)
-  }
-
+  // Fallback to placeholder if the game doesn't exist or doesn't have a playUrl
   const getGameUrl = () => {
     if (!game) return "/games/placeholder-game.html"
 
+    // Check if the game has a valid playUrl, otherwise use the placeholder with game info
     if (game.playUrl) {
       return game.playUrl
     } else {
@@ -119,6 +112,11 @@ export default function GamePlay({ params }: GamePlayProps) {
 
   const isGameWorking = game.isWorking !== false
 
+  const handleStartGame = () => {
+    setGameStarted(true)
+  }
+
+  // Get status indicator
   const getStatusIndicator = () => {
     if (game.isWorking === undefined) {
       return { color: "text-white", icon: <AlertCircle className="h-5 w-5 mr-2" />, text: "Status Unknown" }
@@ -145,9 +143,6 @@ export default function GamePlay({ params }: GamePlayProps) {
               <div className="flex items-center text-gray-400">
                 <span>{viewCount.toLocaleString()}</span>
               </div>
-            )}
-            {hasPlayedGame(gameId) && (
-              <Badge className="bg-green-600/50 border border-green-500 text-green-200">Already Played</Badge>
             )}
             <Button
               variant="ghost"
@@ -233,7 +228,7 @@ export default function GamePlay({ params }: GamePlayProps) {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="border-white text-white hover:bg-white/10 bg-transparent"
+                        className="border-white text-white hover:bg-white/10"
                         onClick={() => setShowComplaintForm(true)}
                       >
                         <AlertTriangle className="mr-2 h-4 w-4" /> Report Issue

@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button"
 import FeaturedGames from "@/components/featured-games"
 import GameGrid from "@/components/game-grid"
 import RecentlyPlayed from "@/components/recently-played"
-import GameStats from "@/components/game-stats" // Import GameStats component
 import { games } from "@/data/games"
 import { sortGames } from "@/utils/sort-utils"
 
@@ -54,7 +53,7 @@ export default function HomePage() {
                   View All <ChevronRight className="h-4 w-4 ml-1" />
                 </Link>
               </div>
-              <FeaturedGames games={featuredGames} />
+              <FeaturedGames />
             </div>
           </section>
 
@@ -62,13 +61,6 @@ export default function HomePage() {
           <div className="mt-12">
             <RecentlyPlayed />
           </div>
-
-          {/* GameStats Section */}
-          <section className="relative z-10 py-12 bg-gradient-to-b from-black to-gray-900">
-            <div className="container mx-auto px-4">
-              <GameStats />
-            </div>
-          </section>
 
           <div className="mt-12">
             <div className="mb-6 flex items-center justify-between">
