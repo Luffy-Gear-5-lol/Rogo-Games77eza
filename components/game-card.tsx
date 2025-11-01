@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { isAdmin } from "@/utils/admin-utils"
 import type { Game } from "@/types/game"
 import GameRating from "./game-rating"
+import { getGameImageUrl } from "@/utils/game-images"
 
 // Update the GameCardProps interface to include an isNew property
 interface GameCardProps {
@@ -33,8 +34,7 @@ export default function GameCard({ game, isNew = false }: GameCardProps) {
 
   const statusIndicator = getStatusIndicator()
 
-  // Use a default placeholder if no image is provided
-  const imageSrc = game.image || "/placeholder.svg?height=200&width=350"
+  const imageSrc = getGameImageUrl(game.id, game.image)
 
   return (
     <Card className="overflow-hidden bg-gradient-to-b from-gray-800 to-gray-900 border-gray-700 transition-all hover:shadow-lg hover:shadow-purple-500/20 group">
