@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
-import { useSelector, useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import type { RootState } from "@/store/store"
 import { setCurrentChannel } from "@/store/chat-slice"
 import { useChatWebSocket } from "@/hooks/use-chat-websocket"
@@ -13,8 +13,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Send, Users, Wifi, WifiOff, RefreshCw, AlertTriangle } from "lucide-react"
-import { filterProfanity, FilterLevel } from "@/utils/profanity-filter"
+import { Send, Users, Wifi, AlertTriangle } from "lucide-react"
+import { FilterLevel } from "@/utils/profanity-filter"
 
 const CHANNELS = [
   { id: "general", name: "General", description: "General discussion", filterLevel: FilterLevel.PG13 },
@@ -24,22 +24,18 @@ const CHANNELS = [
 
 export default function ChatInterface() {
   const dispatch = useDispatch()
-  const { messages, users, currentUser, currentChannel, connectionStatus, typingUsers } = useSelector(
-    (state: RootState) => state.chat,
-  )
-  const { sendMessage, setTyping, getAvatarColor } = useChatWebSocket()
+  const { currentUser, currentChannel } = useSelector((state: RootState) => state.chat)
+  const { messages, users, sendMessage, setTyping, getAvatarColor } = useChatWebSocket()
 
   const [messageInput, setMessageInput] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout>()
 
-  // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  // Handle typing
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setMessageInput(e.target.value)
 
@@ -48,31 +44,27 @@ export default function ChatInterface() {
       setTyping(true)
     }
 
-    // Clear existing timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current)
-    }
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
 
-    // Set new timeout
     typingTimeoutRef.current = setTimeout(() => {
       setIsTyping(false)
       setTyping(false)
     }, 1000)
   }
 
-  // Send message
   const handleSendMessage = () => {
     if (!messageInput.trim() || !currentUser) return
 
     const activeChannel = CHANNELS.find((c) => c.id === currentChannel)
-    const filteredContent = filterProfanity(messageInput, activeChannel?.filterLevel || FilterLevel.PG13)
-    sendMessage(filteredContent)
-    setMessageInput("")
-    setIsTyping(false)
-    setTyping(false)
+    const success = sendMessage(messageInput, activeChannel?.filterLevel || FilterLevel.PG13)
+
+    if (success) {
+      setMessageInput("")
+      setIsTyping(false)
+      setTyping(false)
+    }
   }
 
-  // Handle key press
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
@@ -80,46 +72,16 @@ export default function ChatInterface() {
     }
   }
 
-  // Change channel
   const handleChannelChange = (channelId: string) => {
     dispatch(setCurrentChannel(channelId))
   }
-
-  // Get connection status color
-  const getConnectionColor = () => {
-    switch (connectionStatus) {
-      case "connected":
-        return "text-green-500"
-      case "connecting":
-        return "text-yellow-500"
-      default:
-        return "text-red-500"
-    }
-  }
-
-  // Get connection icon
-  const getConnectionIcon = () => {
-    switch (connectionStatus) {
-      case "connected":
-        return <Wifi className="h-4 w-4" />
-      case "connecting":
-        return <RefreshCw className="h-4 w-4 animate-spin" />
-      default:
-        return <WifiOff className="h-4 w-4" />
-    }
-  }
-
-  // Filter typing users (exclude current user and inactive users)
-  const activeTypingUsers = typingUsers.filter(
-    (userId) => userId !== currentUser?.id && users.some((user) => user.id === userId),
-  )
 
   if (!currentUser) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <h3 className="text-lg font-semibold mb-2">Welcome to Rogo Chat</h3>
-          <p className="text-muted-foreground">Please set up your profile to start chatting.</p>
+          <p className="text-muted-foreground">Loading your profile...</p>
         </div>
       </div>
     )
@@ -132,7 +94,7 @@ export default function ChatInterface() {
         <Alert className="m-4 border-blue-500 bg-blue-50 dark:bg-blue-950/20">
           <AlertTriangle className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-800 dark:text-blue-200 font-medium">
-            ℹ️ Rogo will update very rarely. Features are stable and ready to use!
+            ℹ️ Chat is now fully functional with localStorage-based persistence!
           </AlertDescription>
         </Alert>
 
@@ -143,9 +105,9 @@ export default function ChatInterface() {
               <h2 className="text-lg font-semibold">
                 #{CHANNELS.find((c) => c.id === currentChannel)?.name || currentChannel}
               </h2>
-              <Badge variant="outline" className={getConnectionColor()}>
-                {getConnectionIcon()}
-                {connectionStatus}
+              <Badge variant="outline" className="text-green-600">
+                <Wifi className="h-3 w-3 mr-1" />
+                connected
               </Badge>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -179,7 +141,9 @@ export default function ChatInterface() {
                     messages.map((message) => (
                       <div key={message.id} className="flex gap-3 hover:bg-muted/20 p-2 rounded-lg transition-colors">
                         <Avatar className="h-8 w-8">
-                          <AvatarFallback className={`${message.avatar} text-white text-sm`}>
+                          <AvatarFallback
+                            className={`${message.avatar || getAvatarColor(message.username)} text-white text-sm`}
+                          >
                             {message.username.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
@@ -191,43 +155,12 @@ export default function ChatInterface() {
                                 You
                               </Badge>
                             )}
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(message.timestamp).toLocaleTimeString()}
-                            </span>
+                            <span className="text-xs text-muted-foreground">{message.timestamp}</span>
                           </div>
                           <p className="text-sm break-words">{message.content}</p>
                         </div>
                       </div>
                     ))
-                  )}
-
-                  {/* Typing Indicators */}
-                  {activeTypingUsers.length > 0 && (
-                    <div className="flex gap-3 opacity-60">
-                      <div className="h-8 w-8 flex items-center justify-center">
-                        <div className="flex gap-1">
-                          <div
-                            className="w-1 h-1 bg-muted-foreground rounded-full animate-bounce"
-                            style={{ animationDelay: "0ms" }}
-                          />
-                          <div
-                            className="w-1 h-1 bg-muted-foreground rounded-full animate-bounce"
-                            style={{ animationDelay: "150ms" }}
-                          />
-                          <div
-                            className="w-1 h-1 bg-muted-foreground rounded-full animate-bounce"
-                            style={{ animationDelay: "300ms" }}
-                          />
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-muted-foreground">
-                          {activeTypingUsers.length === 1
-                            ? `${users.find((u) => u.id === activeTypingUsers[0])?.username} is typing...`
-                            : `${activeTypingUsers.length} users are typing...`}
-                        </p>
-                      </div>
-                    </div>
                   )}
 
                   <div ref={messagesEndRef} />
@@ -290,22 +223,6 @@ export default function ChatInterface() {
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-sm font-medium">{user.username}</span>
-                  {typingUsers.includes(user.id) && (
-                    <div className="flex gap-0.5 ml-auto">
-                      <div
-                        className="w-1 h-1 bg-green-500 rounded-full animate-bounce"
-                        style={{ animationDelay: "0ms" }}
-                      />
-                      <div
-                        className="w-1 h-1 bg-green-500 rounded-full animate-bounce"
-                        style={{ animationDelay: "150ms" }}
-                      />
-                      <div
-                        className="w-1 h-1 bg-green-500 rounded-full animate-bounce"
-                        style={{ animationDelay: "300ms" }}
-                      />
-                    </div>
-                  )}
                 </div>
               ))}
 
