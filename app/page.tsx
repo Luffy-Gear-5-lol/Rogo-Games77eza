@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import FeaturedGames from "@/components/featured-games"
 import GameGrid from "@/components/game-grid"
 import RecentlyPlayed from "@/components/recently-played"
+import GameStats from "@/components/game-stats"
 import { games } from "@/data/games"
 import { sortGames } from "@/utils/sort-utils"
 
@@ -39,6 +40,12 @@ export default function HomePage() {
             <div className="absolute inset-0 bg-[url('/images/hero-bg.jpg')] bg-cover bg-center opacity-10"></div>
             <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-black"></div>
           </div>
+
+          <section className="relative z-10 py-12 bg-gradient-to-b from-black to-gray-900">
+            <div className="container mx-auto px-4">
+              <GameStats />
+            </div>
+          </section>
 
           {/* Featured Games */}
           <section className="relative z-10 py-12 bg-gradient-to-b from-black to-gray-900">
