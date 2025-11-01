@@ -28,7 +28,6 @@ export default function UserSetup({ onUserCreated }: UserSetupProps) {
       }
       saveUser(newUser)
       onUserCreated(newUser)
-      setIsCreating(false)
     }
   }
 

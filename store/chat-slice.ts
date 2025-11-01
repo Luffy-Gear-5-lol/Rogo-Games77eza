@@ -52,27 +52,6 @@ const chatSlice = createSlice({
     setConnectionStatus: (state, action: PayloadAction<"connected" | "connecting" | "disconnected">) => {
       state.connectionStatus = action.payload
     },
-    setConnecting: (state) => {
-      state.connectionStatus = "connecting"
-    },
-    setConnected: (state) => {
-      state.connectionStatus = "connected"
-    },
-    setActiveChannel: (state, action: PayloadAction<string>) => {
-      state.currentChannel = action.payload
-    },
-    cleanupTypingUsers: (state) => {
-      state.typingUsers = []
-    },
-    incrementReconnectAttempts: (state) => {
-      // Placeholder for reconnect tracking
-    },
-    resetReconnectAttempts: (state) => {
-      // Placeholder for reconnect tracking
-    },
-    setChannels: (state, action: PayloadAction<string[]>) => {
-      // Placeholder for channel list management
-    },
     addMessage: (state, action: PayloadAction<ChatMessage>) => {
       state.messages.push(action.payload)
       // Keep only last 100 messages
@@ -126,13 +105,6 @@ export const {
   setCurrentUser,
   setCurrentChannel,
   setConnectionStatus,
-  setConnecting,
-  setConnected,
-  setActiveChannel,
-  cleanupTypingUsers,
-  incrementReconnectAttempts,
-  resetReconnectAttempts,
-  setChannels,
   addMessage,
   setMessages,
   addUser,

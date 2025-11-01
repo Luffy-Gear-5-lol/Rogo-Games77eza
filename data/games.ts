@@ -1154,7 +1154,7 @@ export const games: Game[] = [
     image: "/images/games/granny.jpg",
     categories: ["Horror", "Escape", "Stealth"],
     playUrl: "https://lightspeedagencieshelp.sos.al/assets/mainstorage/granny.html",
-    controls: "WASD to move, E to interact, Ctrl to crouch, Shift to run.",
+    controls: "WASD to move, E to interact with objects, Ctrl to crouch, Shift to run.",
     isWorking: false,
   },
   {
@@ -2743,7 +2743,3 @@ export const games: Game[] = [
     isWorking: true,
   },
 ]
-
-import { manga } from "./manga"
-
-export { manga }

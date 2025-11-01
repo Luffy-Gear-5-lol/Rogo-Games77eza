@@ -129,10 +129,11 @@ export default function ChatInterface() {
     <div className="flex h-full bg-background">
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
-        <Alert className="m-4 border-blue-500 bg-blue-50 dark:bg-blue-950/20">
-          <AlertTriangle className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800 dark:text-blue-200 font-medium">
-            ℹ️ Rogo will update very rarely. Features are stable and ready to use!
+        {/* Chat Down Alert */}
+        <Alert className="m-4 border-orange-500 bg-orange-50 dark:bg-orange-950/20">
+          <AlertTriangle className="h-4 w-4 text-orange-600" />
+          <AlertDescription className="text-orange-800 dark:text-orange-200 font-medium">
+            ⚠️ The chat is currently down - Some features may not work properly, but you can still access the chat.
           </AlertDescription>
         </Alert>
 
