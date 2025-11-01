@@ -19,9 +19,11 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
 export function useGameProgress(userId?: string) {
   const [localUserId, setLocalUserId] = useState<string | null>(null)
+  const [isMounted, setIsMounted] = useState(false)
 
-  // Generate or retrieve a session user ID
+  // Generate or retrieve a session user ID and ensure hydration consistency
   useEffect(() => {
+    setIsMounted(true)
     let id = localStorage.getItem("gameSessionId")
     if (!id) {
       id = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -31,7 +33,7 @@ export function useGameProgress(userId?: string) {
   }, [userId])
 
   const { data, error, isLoading, mutate } = useSWR(
-    localUserId ? `/api/games/play-progress?userId=${localUserId}` : null,
+    isMounted && localUserId ? `/api/games/play-progress?userId=${localUserId}` : null,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -94,7 +96,7 @@ export function useGameProgress(userId?: string) {
     totalGamesPlayed: data?.totalGamesPlayed || 0,
     uniqueGamesCount: data?.uniqueGames?.length || 0,
     recentGames: data?.recentGames || [],
-    isLoading,
+    isLoading: isLoading || !isMounted,
     error,
     recordGamePlay,
     hasPlayedGame,
