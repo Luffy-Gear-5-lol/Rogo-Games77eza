@@ -357,32 +357,41 @@ export function useChatWebSocket() {
 
   // Send a message to the server
   const sendMessage = useCallback(
-    (content: string) => {
-      if (!currentUser || !content.trim()) return false
+    (contentOrMessage: string | { op: number; d: any }) => {
+      if (!currentUser || !activeChannel) return false
 
       try {
-        const message: ChatMessage = {
-          id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          userId: currentUser.id,
-          username: currentUser.username,
-          avatar: currentUser.avatar,
-          content: content.trim(),
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          channel: activeChannel,
+        let message: ChatMessage
+
+        if (typeof contentOrMessage === "string") {
+          const content = contentOrMessage.trim()
+          if (!content) return false
+
+          message = {
+            id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            userId: currentUser.id,
+            username: currentUser.username,
+            avatar: currentUser.avatar,
+            content: content,
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            channel: activeChannel,
+          }
+        } else {
+          // Skip WebSocket message types (they're for server communication)
+          return false
         }
 
-        // Save to localStorage
-        const messages = JSON.parse(localStorage.getItem(`${STORAGE_KEYS.MESSAGES}-${activeChannel}`) || "[]")
-        messages.push(message)
+        const storageKey = `${STORAGE_KEYS.MESSAGES}-${activeChannel}`
+        const existingMessages = JSON.parse(localStorage.getItem(storageKey) || "[]")
+        existingMessages.push(message)
 
-        // Keep only last 100 messages
-        if (messages.length > 100) {
-          messages.splice(0, messages.length - 100)
+        // Keep only last 100 messages per channel
+        if (existingMessages.length > 100) {
+          existingMessages.splice(0, existingMessages.length - 100)
         }
 
-        localStorage.setItem(`${STORAGE_KEYS.MESSAGES}-${activeChannel}`, JSON.stringify(messages))
+        localStorage.setItem(storageKey, JSON.stringify(existingMessages))
 
-        // Update local state
         dispatch(addMessage(message))
 
         // Update user activity
@@ -403,7 +412,6 @@ export function useChatWebSocket() {
     [currentUser, activeChannel, dispatch],
   )
 
-  // Send a chat message
   const sendChatMessage = useCallback(
     (content: string, filterLevel: FilterLevel = FilterLevel.PG13) => {
       if (!currentUser || !activeChannel) {
@@ -411,16 +419,7 @@ export function useChatWebSocket() {
       }
 
       const filteredContent = filterProfanity(content, filterLevel)
-
-      return sendMessage({
-        op: OpCode.MESSAGE_CREATE,
-        d: {
-          userId: currentUser.id,
-          content: filteredContent,
-          channel: activeChannel.id,
-          filterLevel,
-        },
-      })
+      return sendMessage(filteredContent)
     },
     [currentUser, activeChannel, sendMessage],
   )
