@@ -1,15 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit"
 
-export interface User {
-  id: string
-  username: string
-  avatar: string
-  status: "online" | "away" | "busy" | "offline"
-  channel: string
-  lastSeen: number
-}
-
-export interface Message {
+export interface ChatMessage {
   id: string
   userId: string
   username: string
@@ -19,166 +10,140 @@ export interface Message {
   channel: string
 }
 
-export interface Channel {
+export interface ChatUser {
   id: string
-  name: string
-  type: "text" | "voice"
-}
-
-export interface TypingUser {
-  userId: string
   username: string
+  avatar: string
+  lastSeen: number
   channel: string
-  timestamp: number
+  status: "online" | "away" | "busy" | "offline"
 }
 
 interface ChatState {
-  connected: boolean
-  connecting: boolean
+  messages: ChatMessage[]
+  users: ChatUser[]
+  currentUser: ChatUser | null
+  currentChannel: string
+  connectionStatus: "connected" | "connecting" | "disconnected"
+  typingUsers: string[]
   error: string | null
-  currentUser: User | null
-  activeChannel: Channel | null
-  channels: Channel[]
-  messages: Message[]
-  users: User[]
-  typingUsers: TypingUser[]
-  reconnectAttempts: number
-  maxReconnectAttempts: number
 }
 
 const initialState: ChatState = {
-  connected: false,
-  connecting: false,
-  error: null,
-  currentUser: null,
-  activeChannel: null,
-  channels: [
-    { id: "general", name: "general", type: "text" },
-    { id: "gaming", name: "gaming", type: "text" },
-    { id: "memes", name: "memes", type: "text" },
-    { id: "after-dark", name: "after-dark", type: "text" },
-    { id: "nsfw-chat", name: "nsfw-chat", type: "text" },
-  ],
   messages: [],
   users: [],
+  currentUser: null,
+  currentChannel: "general",
+  connectionStatus: "disconnected",
   typingUsers: [],
-  reconnectAttempts: 0,
-  maxReconnectAttempts: 5,
+  error: null,
 }
 
 const chatSlice = createSlice({
   name: "chat",
   initialState,
   reducers: {
-    setConnecting: (state, action: PayloadAction<boolean>) => {
-      state.connecting = action.payload
-      if (action.payload) {
-        state.error = null
-      }
-    },
-    setConnected: (state, action: PayloadAction<boolean>) => {
-      state.connected = action.payload
-      state.connecting = false
-      if (action.payload) {
-        state.reconnectAttempts = 0
-        state.error = null
-      }
-    },
-    setError: (state, action: PayloadAction<string>) => {
-      state.error = action.payload
-      state.connecting = false
-      state.connected = false
-    },
-    setCurrentUser: (state, action: PayloadAction<User>) => {
+    setCurrentUser: (state, action: PayloadAction<ChatUser>) => {
       state.currentUser = action.payload
     },
-    setActiveChannel: (state, action: PayloadAction<Channel>) => {
-      state.activeChannel = action.payload
+    setCurrentChannel: (state, action: PayloadAction<string>) => {
+      state.currentChannel = action.payload
     },
-    setChannels: (state, action: PayloadAction<Channel[]>) => {
-      state.channels = action.payload
+    setConnectionStatus: (state, action: PayloadAction<"connected" | "connecting" | "disconnected">) => {
+      state.connectionStatus = action.payload
     },
-    setMessages: (state, action: PayloadAction<Message[]>) => {
-      state.messages = action.payload
+    setConnecting: (state) => {
+      state.connectionStatus = "connecting"
     },
-    addMessage: (state, action: PayloadAction<Message>) => {
-      // Only add if not already in the list and is for current channel
-      const exists = state.messages.some((m) => m.id === action.payload.id)
-      if (!exists && action.payload.channel === state.activeChannel?.id) {
-        state.messages.push(action.payload)
-
-        // Keep only last 100 messages
-        if (state.messages.length > 100) {
-          state.messages = state.messages.slice(-100)
-        }
+    setConnected: (state) => {
+      state.connectionStatus = "connected"
+    },
+    setActiveChannel: (state, action: PayloadAction<string>) => {
+      state.currentChannel = action.payload
+    },
+    cleanupTypingUsers: (state) => {
+      state.typingUsers = []
+    },
+    incrementReconnectAttempts: (state) => {
+      // Placeholder for reconnect tracking
+    },
+    resetReconnectAttempts: (state) => {
+      // Placeholder for reconnect tracking
+    },
+    setChannels: (state, action: PayloadAction<string[]>) => {
+      // Placeholder for channel list management
+    },
+    addMessage: (state, action: PayloadAction<ChatMessage>) => {
+      state.messages.push(action.payload)
+      // Keep only last 100 messages
+      if (state.messages.length > 100) {
+        state.messages = state.messages.slice(-100)
       }
     },
-    setUsers: (state, action: PayloadAction<User[]>) => {
-      state.users = action.payload
+    setMessages: (state, action: PayloadAction<ChatMessage[]>) => {
+      state.messages = action.payload
     },
-    addUser: (state, action: PayloadAction<User>) => {
-      const existingIndex = state.users.findIndex((u) => u.id === action.payload.id)
-      if (existingIndex >= 0) {
-        state.users[existingIndex] = action.payload
-      } else {
+    addUser: (state, action: PayloadAction<ChatUser>) => {
+      const existingUser = state.users.find((user) => user.id === action.payload.id)
+      if (!existingUser) {
         state.users.push(action.payload)
       }
     },
     removeUser: (state, action: PayloadAction<string>) => {
-      state.users = state.users.filter((u) => u.id !== action.payload)
+      state.users = state.users.filter((user) => user.id !== action.payload)
     },
-    addTypingUser: (state, action: PayloadAction<TypingUser>) => {
-      // Remove existing typing indicator for this user
-      state.typingUsers = state.typingUsers.filter((u) => u.userId !== action.payload.userId)
-
-      // Add new typing indicator
-      state.typingUsers.push(action.payload)
+    setUsers: (state, action: PayloadAction<ChatUser[]>) => {
+      state.users = action.payload
+    },
+    updateUserActivity: (state, action: PayloadAction<string>) => {
+      const user = state.users.find((user) => user.id === action.payload)
+      if (user) {
+        user.lastSeen = Date.now()
+        user.status = "online"
+      }
+    },
+    setTypingUsers: (state, action: PayloadAction<string[]>) => {
+      state.typingUsers = action.payload
+    },
+    addTypingUser: (state, action: PayloadAction<string>) => {
+      if (!state.typingUsers.includes(action.payload)) {
+        state.typingUsers.push(action.payload)
+      }
     },
     removeTypingUser: (state, action: PayloadAction<string>) => {
-      state.typingUsers = state.typingUsers.filter((u) => u.userId !== action.payload)
+      state.typingUsers = state.typingUsers.filter((userId) => userId !== action.payload)
     },
-    clearTypingUsers: (state) => {
-      state.typingUsers = []
+    setError: (state, action: PayloadAction<string | null>) => {
+      state.error = action.payload
     },
-    cleanupTypingUsers: (state) => {
-      const now = Date.now()
-      state.typingUsers = state.typingUsers.filter((u) => now - u.timestamp < 5000)
-    },
-    incrementReconnectAttempts: (state) => {
-      state.reconnectAttempts += 1
-    },
-    resetReconnectAttempts: (state) => {
-      state.reconnectAttempts = 0
-    },
-    resetChat: (state) => {
-      return {
-        ...initialState,
-        channels: state.channels,
-        reconnectAttempts: state.reconnectAttempts,
-      }
+    clearMessages: (state) => {
+      state.messages = []
     },
   },
 })
 
 export const {
+  setCurrentUser,
+  setCurrentChannel,
+  setConnectionStatus,
   setConnecting,
   setConnected,
-  setError,
-  setCurrentUser,
   setActiveChannel,
-  setChannels,
-  setMessages,
-  addMessage,
-  setUsers,
-  addUser,
-  removeUser,
-  addTypingUser,
-  removeTypingUser,
-  clearTypingUsers,
   cleanupTypingUsers,
   incrementReconnectAttempts,
   resetReconnectAttempts,
-  resetChat,
+  setChannels,
+  addMessage,
+  setMessages,
+  addUser,
+  removeUser,
+  setUsers,
+  updateUserActivity,
+  setTypingUsers,
+  addTypingUser,
+  removeTypingUser,
+  setError,
+  clearMessages,
 } = chatSlice.actions
 
 export default chatSlice.reducer

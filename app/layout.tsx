@@ -8,7 +8,7 @@ import { Suspense } from "react"
 export const metadata = {
   title: "Rogo Games - Play Awesome Games Online",
   description: "Discover and play the best online games for free. New games added regularly!",
-    generator: 'v0.dev'
+    generator: 'v0.app'
 }
 
 export default function RootLayout({

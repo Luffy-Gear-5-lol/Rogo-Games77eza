@@ -1,451 +1,323 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef, useEffect, useCallback } from "react"
-import { Provider } from "react-redux"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { FilterLevel } from "@/utils/profanity-filter"
-import {
-  Send,
-  Hash,
-  Settings,
-  Users,
-  Bell,
-  PlusCircle,
-  Smile,
-  Paperclip,
-  LogOut,
-  RefreshCw,
-  Wifi,
-  WifiOff,
-} from "lucide-react"
-import { getCurrentUser, type User } from "@/utils/user-utils"
+import { useState, useEffect, useRef } from "react"
+import { useSelector, useDispatch } from "react-redux"
+import type { RootState } from "@/store/store"
+import { setCurrentChannel } from "@/store/chat-slice"
 import { useChatWebSocket } from "@/hooks/use-chat-websocket"
-import { store } from "@/store/store"
-import UserSetup from "@/components/user-setup"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Send, Users, Wifi, WifiOff, RefreshCw, AlertTriangle } from "lucide-react"
+import { filterProfanity, FilterLevel } from "@/utils/profanity-filter"
 
-interface Channel {
-  id: string
-  name: string
-  filterLevel: FilterLevel
-  description: string
-}
+const CHANNELS = [
+  { id: "general", name: "General", description: "General discussion", filterLevel: FilterLevel.PG13 },
+  { id: "pg13", name: "PG-13", description: "Mild language allowed", filterLevel: FilterLevel.PG13 },
+  { id: "r-rated", name: "R-Rated", description: "All language allowed", filterLevel: FilterLevel.R },
+]
 
-function ChatInterfaceInner() {
-  const channels: Channel[] = [
-    {
-      id: "general",
-      name: "general",
-      filterLevel: FilterLevel.PG13,
-      description: "General discussion - No slurs, profanity allowed",
-    },
-    {
-      id: "gaming",
-      name: "gaming",
-      filterLevel: FilterLevel.PG13,
-      description: "Game discussion - No slurs, profanity allowed",
-    },
-    {
-      id: "memes",
-      name: "memes",
-      filterLevel: FilterLevel.PG13,
-      description: "Share memes - No slurs, profanity allowed",
-    },
-    {
-      id: "after-dark",
-      name: "after-dark",
-      filterLevel: FilterLevel.R,
-      description: "Mature content allowed - No filtering",
-    },
-    {
-      id: "nsfw-chat",
-      name: "nsfw-chat",
-      filterLevel: FilterLevel.R,
-      description: "Adult topics - No filtering",
-    },
-  ]
+export default function ChatInterface() {
+  const dispatch = useDispatch()
+  const { messages, users, currentUser, currentChannel, connectionStatus, typingUsers } = useSelector(
+    (state: RootState) => state.chat,
+  )
+  const { sendMessage, setTyping, getAvatarColor } = useChatWebSocket()
 
-  const [user, setUser] = useState<User | null>(null)
-  const [newMessage, setNewMessage] = useState("")
-  const [activeChannel, setActiveChannel] = useState<Channel>(channels[0])
-  const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const [messageInput, setMessageInput] = useState("")
+  const [isTyping, setIsTyping] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const typingTimeoutRef = useRef<NodeJS.Timeout>()
 
-  const {
-    connected,
-    connecting,
-    error,
-    currentUser,
-    messages,
-    users,
-    typingUsers,
-    connect,
-    sendMessage,
-    changeChannel,
-    handleTyping,
-  } = useChatWebSocket()
-
-  // Initialize user on component mount
+  // Auto-scroll to bottom
   useEffect(() => {
-    const currentUser = getCurrentUser()
-    if (currentUser) {
-      setUser(currentUser)
-      console.log("User initialized:", currentUser)
-    }
-  }, [])
-
-  // Connect when user is set
-  useEffect(() => {
-    if (user && !connected && !connecting) {
-      connect(user, activeChannel.id)
-    }
-  }, [user, connected, connecting, connect, activeChannel.id])
-
-  // Scroll to bottom on new message
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      const scrollElement = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]")
-      if (scrollElement) {
-        scrollElement.scrollTop = scrollElement.scrollHeight
-      }
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  const handleUserCreated = useCallback((newUser: User) => {
-    setUser(newUser)
-    console.log("New user created:", newUser)
-  }, [])
+  // Handle typing
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMessageInput(e.target.value)
 
-  const handleSendMessage = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault()
-      if (newMessage.trim() && user) {
-        const success = sendMessage(newMessage, activeChannel.filterLevel)
-        if (success) {
-          setNewMessage("")
-        }
-      }
-    },
-    [newMessage, user, activeChannel.filterLevel, sendMessage],
-  )
-
-  const handleChannelChange = useCallback(
-    (channel: Channel) => {
-      console.log("Changing channel from", activeChannel.id, "to", channel.id)
-      setActiveChannel(channel)
-      if (user) {
-        changeChannel(channel.id)
-      }
-    },
-    [activeChannel.id, user, changeChannel],
-  )
-
-  const handleLogout = useCallback(() => {
-    if (user) {
-      localStorage.removeItem("rogo-chat-user")
-      setUser(null)
-      console.log("User logged out")
+    if (!isTyping && e.target.value.length > 0) {
+      setIsTyping(true)
+      setTyping(true)
     }
-  }, [user])
 
-  const handleRefresh = useCallback(() => {
-    if (user) {
-      connect(user, activeChannel.id)
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
     }
-  }, [user, activeChannel.id, connect])
 
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setNewMessage(e.target.value)
-      if (e.target.value.length > 0) {
-        handleTyping()
-      }
-    },
-    [handleTyping],
-  )
-
-  // Show user setup if no user is logged in
-  if (!user) {
-    return <UserSetup onUserCreated={handleUserCreated} />
+    // Set new timeout
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false)
+      setTyping(false)
+    }, 1000)
   }
 
-  const ConnectionIcon = connected ? Wifi : WifiOff
-  const connectionStatus = connecting ? "connecting" : connected ? "connected" : "disconnected"
+  // Send message
+  const handleSendMessage = () => {
+    if (!messageInput.trim() || !currentUser) return
+
+    const activeChannel = CHANNELS.find((c) => c.id === currentChannel)
+    const filteredContent = filterProfanity(messageInput, activeChannel?.filterLevel || FilterLevel.PG13)
+    sendMessage(filteredContent)
+    setMessageInput("")
+    setIsTyping(false)
+    setTyping(false)
+  }
+
+  // Handle key press
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      handleSendMessage()
+    }
+  }
+
+  // Change channel
+  const handleChannelChange = (channelId: string) => {
+    dispatch(setCurrentChannel(channelId))
+  }
+
+  // Get connection status color
+  const getConnectionColor = () => {
+    switch (connectionStatus) {
+      case "connected":
+        return "text-green-500"
+      case "connecting":
+        return "text-yellow-500"
+      default:
+        return "text-red-500"
+    }
+  }
+
+  // Get connection icon
+  const getConnectionIcon = () => {
+    switch (connectionStatus) {
+      case "connected":
+        return <Wifi className="h-4 w-4" />
+      case "connecting":
+        return <RefreshCw className="h-4 w-4 animate-spin" />
+      default:
+        return <WifiOff className="h-4 w-4" />
+    }
+  }
+
+  // Filter typing users (exclude current user and inactive users)
+  const activeTypingUsers = typingUsers.filter(
+    (userId) => userId !== currentUser?.id && users.some((user) => user.id === userId),
+  )
+
+  if (!currentUser) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <h3 className="text-lg font-semibold mb-2">Welcome to Rogo Chat</h3>
+          <p className="text-muted-foreground">Please set up your profile to start chatting.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
-      <div className="container mx-auto p-4">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">Rogo Chat</h1>
-          <div className="flex items-center gap-4">
+    <div className="flex h-full bg-background">
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col">
+        <Alert className="m-4 border-blue-500 bg-blue-50 dark:bg-blue-950/20">
+          <AlertTriangle className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800 dark:text-blue-200 font-medium">
+            ℹ️ Rogo will update very rarely. Features are stable and ready to use!
+          </AlertDescription>
+        </Alert>
+
+        {/* Header */}
+        <div className="border-b p-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <ConnectionIcon
-                className={`w-4 h-4 ${connected ? "text-green-500" : connecting ? "text-yellow-500" : "text-red-500"}`}
-              />
-              <span className="text-sm text-gray-400">
-                {users.length + 1} user{users.length !== 0 ? "s" : ""} online
-              </span>
-              <span className="text-xs text-gray-500">({connectionStatus})</span>
+              <h2 className="text-lg font-semibold">
+                #{CHANNELS.find((c) => c.id === currentChannel)?.name || currentChannel}
+              </h2>
+              <Badge variant="outline" className={getConnectionColor()}>
+                {getConnectionIcon()}
+                {connectionStatus}
+              </Badge>
             </div>
-            {error && (
-              <Button
-                onClick={handleRefresh}
-                variant="outline"
-                size="sm"
-                className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-transparent"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Retry
-              </Button>
-            )}
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              size="sm"
-              className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-transparent"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Users className="h-4 w-4" />
+              {users.length + 1} {users.length === 0 ? "user" : "users"} online
+            </div>
           </div>
         </div>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-900/50 border border-red-500 rounded-lg text-red-200">
-            <p className="text-sm">{error}</p>
-          </div>
-        )}
+        {/* Channel Tabs */}
+        <Tabs value={currentChannel} onValueChange={handleChannelChange} className="flex-1 flex flex-col">
+          <TabsList className="grid w-full grid-cols-3 mx-4 mt-2">
+            {CHANNELS.map((channel) => (
+              <TabsTrigger key={channel.id} value={channel.id}>
+                {channel.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-[80vh]">
-          {/* Sidebar */}
-          <div className="bg-gray-800 rounded-lg p-4 lg:col-span-1 flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">Channels</h2>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <PlusCircle className="h-5 w-5" />
-              </Button>
-            </div>
-
-            <div className="space-y-1 flex-1 overflow-y-auto">
-              {channels.map((channel) => (
-                <button
-                  key={channel.id}
-                  onClick={() => handleChannelChange(channel)}
-                  className={`w-full text-left px-3 py-2 rounded-md flex items-center ${
-                    activeChannel.id === channel.id
-                      ? "bg-gray-700 text-white"
-                      : "text-gray-400 hover:bg-gray-700 hover:text-white"
-                  }`}
-                >
-                  <Hash className="h-4 w-4 mr-2" />
-                  <span>{channel.name}</span>
-                  {channel.filterLevel === FilterLevel.R && (
-                    <span className="ml-auto text-xs bg-red-500 text-white px-1.5 py-0.5 rounded">R</span>
-                  )}
-                  {channel.filterLevel === FilterLevel.PG13 && (
-                    <span className="ml-auto text-xs bg-green-500 text-white px-1.5 py-0.5 rounded">PG-13</span>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {/* Online Users List */}
-            <div className="mt-4 pt-4 border-t border-gray-700">
-              <h3 className="text-sm font-semibold text-gray-400 mb-2">Online Users ({users.length + 1})</h3>
-              <div className="space-y-1 max-h-32 overflow-y-auto">
-                {/* Current user */}
-                <div className="flex items-center text-sm">
-                  <div
-                    className={`w-6 h-6 rounded-full ${user.avatar} flex items-center justify-center text-xs font-bold mr-2`}
-                  >
-                    {user.username.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="text-purple-400 font-medium">{user.username} (You)</span>
-                </div>
-                {/* Other users */}
-                {users.map((onlineUser) => (
-                  <div key={onlineUser.id} className="flex items-center text-sm">
-                    <div
-                      className={`w-6 h-6 rounded-full ${onlineUser.avatar} flex items-center justify-center text-xs font-bold mr-2`}
-                    >
-                      {onlineUser.username.charAt(0).toUpperCase()}
+          {CHANNELS.map((channel) => (
+            <TabsContent key={channel.id} value={channel.id} className="flex-1 flex flex-col mt-2">
+              {/* Messages */}
+              <ScrollArea className="flex-1 px-4">
+                <div className="space-y-4 py-4">
+                  {messages.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      <p>No messages yet. Start the conversation!</p>
+                      <p className="text-sm mt-2">{channel.description}</p>
                     </div>
-                    <span className="text-gray-300">{onlineUser.username}</span>
-                  </div>
-                ))}
-                {users.length === 0 && <p className="text-xs text-gray-500 italic">Only you are online</p>}
-              </div>
-            </div>
-
-            <div className="mt-4 pt-4 border-t border-gray-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div
-                    className={`w-8 h-8 rounded-full ${user.avatar} flex items-center justify-center text-sm font-bold`}
-                  >
-                    {user.username.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="ml-2 font-medium">{user.username}</span>
-                </div>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Chat Area */}
-          <Card className="lg:col-span-3 flex flex-col bg-gray-800 border-gray-700">
-            {/* Channel Header */}
-            <div className="border-b border-gray-700 p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center">
-                    <Hash className="h-5 w-5 mr-2" />
-                    <h2 className="text-lg font-bold">{activeChannel.name}</h2>
-                    {activeChannel.filterLevel === FilterLevel.R && (
-                      <span className="ml-2 text-xs bg-red-500 text-white px-1.5 py-0.5 rounded">R</span>
-                    )}
-                    {activeChannel.filterLevel === FilterLevel.PG13 && (
-                      <span className="ml-2 text-xs bg-green-500 text-white px-1.5 py-0.5 rounded">PG-13</span>
-                    )}
-                    <span className="ml-2 text-xs text-gray-400">({messages.length} messages)</span>
-                  </div>
-                  <p className="text-sm text-gray-400">{activeChannel.description}</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button variant="ghost" size="icon" className="rounded-full">
-                    <Bell className="h-5 w-5" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="rounded-full">
-                    <Users className="h-5 w-5" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Messages */}
-            <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
-              <div className="space-y-4">
-                {!connected && (
-                  <div className="text-center text-gray-500 italic py-4">
-                    <RefreshCw className={`h-4 w-4 mx-auto mb-2 ${connecting ? "animate-spin" : ""}`} />
-                    {connecting ? "Connecting..." : "Disconnected"}
-                  </div>
-                )}
-                {connected && messages.length === 0 && (
-                  <div className="text-center text-gray-500 italic py-8">
-                    <p>No messages yet. Say hello!</p>
-                    <p className="text-xs mt-2">Messages will appear here in real-time</p>
-                  </div>
-                )}
-                {messages.map((msg) => (
-                  <div key={msg.id} className="flex items-start gap-3">
-                    <div
-                      className={`flex-shrink-0 w-8 h-8 rounded-full ${msg.avatar} flex items-center justify-center text-sm font-bold`}
-                    >
-                      {msg.username.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">{msg.username}</span>
-                        {msg.userId === user.id && (
-                          <span className="text-xs bg-purple-600 text-white px-1.5 py-0.5 rounded">You</span>
-                        )}
-                        <span className="text-xs text-gray-400">{msg.timestamp}</span>
-                      </div>
-                      <p className="text-gray-200 break-words">{msg.content}</p>
-                    </div>
-                  </div>
-                ))}
-                {/* Typing indicators */}
-                {typingUsers.map((typingUser) => (
-                  <div key={typingUser.userId} className="flex items-center gap-3 text-gray-400 italic">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-sm">
-                      <div className="flex space-x-1">
-                        <div
-                          className="w-1 h-1 bg-gray-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "0ms" }}
-                        ></div>
-                        <div
-                          className="w-1 h-1 bg-gray-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "150ms" }}
-                        ></div>
-                        <div
-                          className="w-1 h-1 bg-gray-400 rounded-full animate-bounce"
-                          style={{ animationDelay: "300ms" }}
-                        ></div>
-                      </div>
-                    </div>
-                    <span className="text-sm">{typingUser.username} is typing...</span>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-
-            {/* Message Input */}
-            <div className="p-4 border-t border-gray-700">
-              <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <Input
-                    type="text"
-                    placeholder={`Message #${activeChannel.name}`}
-                    value={newMessage}
-                    onChange={handleInputChange}
-                    className="bg-gray-700 border-gray-600 focus:ring-purple-500 pr-20"
-                    maxLength={500}
-                    disabled={!connected}
-                  />
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
-                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                      <Paperclip className="h-4 w-4" />
-                    </Button>
-                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                      <Smile className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                <Button
-                  type="submit"
-                  className="bg-purple-600 hover:bg-purple-700"
-                  disabled={!newMessage.trim() || !connected}
-                >
-                  <Send className="h-4 w-4" />
-                  <span className="sr-only">Send message</span>
-                </Button>
-              </form>
-
-              <div className="mt-2 flex items-center justify-between text-xs text-gray-400">
-                <div>
-                  {activeChannel.filterLevel === FilterLevel.PG13 ? (
-                    <p>PG-13 mode: Slurs are filtered, profanity is allowed</p>
                   ) : (
-                    <p>R mode: No filtering applied - anything goes</p>
+                    messages.map((message) => (
+                      <div key={message.id} className="flex gap-3 hover:bg-muted/20 p-2 rounded-lg transition-colors">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className={`${message.avatar} text-white text-sm`}>
+                            {message.username.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-sm">{message.username}</span>
+                            {message.userId === currentUser?.id && (
+                              <Badge variant="secondary" className="text-xs">
+                                You
+                              </Badge>
+                            )}
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(message.timestamp).toLocaleTimeString()}
+                            </span>
+                          </div>
+                          <p className="text-sm break-words">{message.content}</p>
+                        </div>
+                      </div>
+                    ))
                   )}
+
+                  {/* Typing Indicators */}
+                  {activeTypingUsers.length > 0 && (
+                    <div className="flex gap-3 opacity-60">
+                      <div className="h-8 w-8 flex items-center justify-center">
+                        <div className="flex gap-1">
+                          <div
+                            className="w-1 h-1 bg-muted-foreground rounded-full animate-bounce"
+                            style={{ animationDelay: "0ms" }}
+                          />
+                          <div
+                            className="w-1 h-1 bg-muted-foreground rounded-full animate-bounce"
+                            style={{ animationDelay: "150ms" }}
+                          />
+                          <div
+                            className="w-1 h-1 bg-muted-foreground rounded-full animate-bounce"
+                            style={{ animationDelay: "300ms" }}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-muted-foreground">
+                          {activeTypingUsers.length === 1
+                            ? `${users.find((u) => u.id === activeTypingUsers[0])?.username} is typing...`
+                            : `${activeTypingUsers.length} users are typing...`}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div ref={messagesEndRef} />
                 </div>
-                <div className="flex items-center gap-2">
-                  <span>{newMessage.length}/500</span>
-                  <ConnectionIcon
-                    className={`w-3 h-3 ${
-                      connected ? "text-green-500" : connecting ? "text-yellow-500" : "text-red-500"
-                    }`}
+              </ScrollArea>
+
+              {/* Message Input */}
+              <div className="border-t p-4">
+                <div className="flex gap-2">
+                  <Input
+                    value={messageInput}
+                    onChange={handleInputChange}
+                    onKeyPress={handleKeyPress}
+                    placeholder={`Message #${channel.name.toLowerCase()}...`}
+                    className="flex-1"
+                    maxLength={500}
                   />
+                  <Button onClick={handleSendMessage} disabled={!messageInput.trim()}>
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex justify-between items-center mt-2 text-xs text-muted-foreground">
+                  <span>{channel.description}</span>
+                  <span>{messageInput.length}/500</span>
                 </div>
               </div>
+            </TabsContent>
+          ))}
+        </Tabs>
+      </div>
+
+      {/* Sidebar */}
+      <div className="w-64 border-l bg-muted/30">
+        <div className="p-4">
+          <h3 className="font-semibold mb-4 flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Online Users ({users.length + 1})
+          </h3>
+          <ScrollArea className="h-[400px]">
+            <div className="space-y-2">
+              {/* Current User */}
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-purple-100 dark:bg-purple-900/20">
+                <Avatar className="h-6 w-6">
+                  <AvatarFallback className={`${currentUser.avatar} text-white text-xs`}>
+                    {currentUser.username.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm font-medium">{currentUser.username}</span>
+                <Badge variant="secondary" className="text-xs ml-auto">
+                  You
+                </Badge>
+              </div>
+
+              {/* Other Users */}
+              {users.map((user) => (
+                <div key={user.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50">
+                  <Avatar className="h-6 w-6">
+                    <AvatarFallback className={`${user.avatar} text-white text-xs`}>
+                      {user.username.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium">{user.username}</span>
+                  {typingUsers.includes(user.id) && (
+                    <div className="flex gap-0.5 ml-auto">
+                      <div
+                        className="w-1 h-1 bg-green-500 rounded-full animate-bounce"
+                        style={{ animationDelay: "0ms" }}
+                      />
+                      <div
+                        className="w-1 h-1 bg-green-500 rounded-full animate-bounce"
+                        style={{ animationDelay: "150ms" }}
+                      />
+                      <div
+                        className="w-1 h-1 bg-green-500 rounded-full animate-bounce"
+                        style={{ animationDelay: "300ms" }}
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {users.length === 0 && (
+                <div className="text-center text-muted-foreground py-4">
+                  <p className="text-sm">No other users online</p>
+                </div>
+              )}
             </div>
-          </Card>
+          </ScrollArea>
         </div>
       </div>
     </div>
-  )
-}
-
-export default function ChatInterface() {
-  return (
-    <Provider store={store}>
-      <ChatInterfaceInner />
-    </Provider>
   )
 }

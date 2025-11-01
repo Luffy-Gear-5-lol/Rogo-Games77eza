@@ -21,6 +21,16 @@ import {
   type Message,
 } from "@/store/chat-slice"
 import type { RootState } from "@/store/store"
+import {
+  setMessages as setReduxMessages,
+  setUsers as setReduxUsers,
+  setConnectionStatus,
+  addTypingUser as addReduxTypingUser,
+  type ChatMessage,
+  type ChatUser,
+} from "@/store/chat-slice"
+import { getCurrentUser } from "@/utils/user-utils"
+import { filterProfanity } from "@/utils/profanity-filter"
 
 // WebSocket message types (opcodes like Discord)
 enum OpCode {
@@ -54,6 +64,7 @@ export function useChatWebSocket() {
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const activityIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const lastUpdateRef = useRef<number>(0)
 
   const {
     connected,
@@ -68,6 +79,81 @@ export function useChatWebSocket() {
     reconnectAttempts,
     maxReconnectAttempts,
   } = useSelector((state: RootState) => state.chat)
+
+  // Generate avatar color based on username
+  const getAvatarColor = useCallback((username: string) => {
+    const colors = [
+      "bg-red-500",
+      "bg-blue-500",
+      "bg-green-500",
+      "bg-yellow-500",
+      "bg-purple-500",
+      "bg-pink-500",
+      "bg-indigo-500",
+      "bg-teal-500",
+    ]
+    let hash = 0
+    for (let i = 0; i < username.length; i++) {
+      hash = username.charCodeAt(i) + ((hash << 5) - hash)
+    }
+    return colors[Math.abs(hash) % colors.length]
+  }, [])
+
+  // Load data from localStorage
+  const loadFromStorage = useCallback(() => {
+    try {
+      const messagesData = localStorage.getItem(STORAGE_KEYS.MESSAGES)
+      const usersData = localStorage.getItem(STORAGE_KEYS.USERS)
+      const typingData = localStorage.getItem(STORAGE_KEYS.TYPING)
+
+      const now = Date.now()
+
+      if (messagesData) {
+        const messages: ChatMessage[] = JSON.parse(messagesData)
+        const channelMessages = messages.filter((msg) => msg.channel === activeChannel)
+        dispatch(setMessages(channelMessages))
+      }
+
+      if (usersData) {
+        const users: ChatUser[] = JSON.parse(usersData)
+        const activeUsers = users.filter(
+          (user) => user.channel === activeChannel && now - user.lastSeen < 45000, // 45 seconds timeout
+        )
+        dispatch(setUsers(activeUsers))
+      }
+
+      if (typingData) {
+        const typing = JSON.parse(typingData)
+        const channelTyping = typing[activeChannel] || []
+        const activeTyping = channelTyping.filter(
+          (item: any) => now - item.timestamp < 5000, // 5 seconds timeout
+        )
+        dispatch(addTypingUser(activeTyping.map((item: any) => item.userId)))
+      }
+
+      lastUpdateRef.current = now
+      dispatch(setConnectionStatus("connected"))
+    } catch (error) {
+      console.error("Error loading from storage:", error)
+      dispatch(setConnectionStatus("disconnected"))
+    }
+  }, [dispatch, activeChannel])
+
+  // Save data to localStorage
+  const saveToStorage = useCallback((key: string, data: any) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(data))
+
+      // Dispatch custom event for cross-tab communication
+      window.dispatchEvent(
+        new CustomEvent("chat-update", {
+          detail: { key, data, timestamp: Date.now() },
+        }),
+      )
+    } catch (error) {
+      console.error("Error saving to storage:", error)
+    }
+  }, [])
 
   // Clean up typing indicators
   useEffect(() => {
@@ -270,13 +356,52 @@ export function useChatWebSocket() {
   }, [connect, currentUser, activeChannel])
 
   // Send a message to the server
-  const sendMessage = useCallback((message: any) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(message))
-      return true
-    }
-    return false
-  }, [])
+  const sendMessage = useCallback(
+    (content: string) => {
+      if (!currentUser || !content.trim()) return false
+
+      try {
+        const message: ChatMessage = {
+          id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          userId: currentUser.id,
+          username: currentUser.username,
+          avatar: currentUser.avatar,
+          content: content.trim(),
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          channel: activeChannel,
+        }
+
+        // Save to localStorage
+        const messages = JSON.parse(localStorage.getItem(`${STORAGE_KEYS.MESSAGES}-${activeChannel}`) || "[]")
+        messages.push(message)
+
+        // Keep only last 100 messages
+        if (messages.length > 100) {
+          messages.splice(0, messages.length - 100)
+        }
+
+        localStorage.setItem(`${STORAGE_KEYS.MESSAGES}-${activeChannel}`, JSON.stringify(messages))
+
+        // Update local state
+        dispatch(addMessage(message))
+
+        // Update user activity
+        const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || "[]")
+        const userIndex = users.findIndex((u: ChatUser) => u.id === currentUser.id)
+        if (userIndex >= 0) {
+          users[userIndex].lastSeen = Date.now()
+          localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users))
+        }
+
+        return true
+      } catch (error) {
+        console.error("Send message error:", error)
+        dispatch(setError("Failed to send message"))
+        return false
+      }
+    },
+    [currentUser, activeChannel, dispatch],
+  )
 
   // Send a chat message
   const sendChatMessage = useCallback(
@@ -285,11 +410,13 @@ export function useChatWebSocket() {
         return false
       }
 
+      const filteredContent = filterProfanity(content, filterLevel)
+
       return sendMessage({
         op: OpCode.MESSAGE_CREATE,
         d: {
           userId: currentUser.id,
-          content,
+          content: filteredContent,
           channel: activeChannel.id,
           filterLevel,
         },
@@ -436,20 +563,20 @@ export function useChatWebSocket() {
       if (!activeChannel) return
 
       try {
-        if (e.key === `${STORAGE_KEYS.MESSAGES}-${activeChannel.id}` && e.newValue) {
+        if (e.key === `${STORAGE_KEYS.MESSAGES}-${activeChannel}` && e.newValue) {
           const messages = JSON.parse(e.newValue)
-          dispatch(setMessages(messages))
+          dispatch(setReduxMessages(messages))
         } else if (e.key === STORAGE_KEYS.USERS && e.newValue) {
           const allUsers = JSON.parse(e.newValue)
-          const channelUsers = allUsers.filter((u: User) => u.channel === activeChannel.id && isUserActive(u))
-          dispatch(setUsers(channelUsers))
-        } else if (e.key === `${STORAGE_KEYS.TYPING}-${activeChannel.id}` && e.newValue) {
+          const channelUsers = allUsers.filter((u: User) => u.channel === activeChannel && isUserActive(u))
+          dispatch(setReduxUsers(channelUsers))
+        } else if (e.key === `${STORAGE_KEYS.TYPING}-${activeChannel}` && e.newValue) {
           const typingData = JSON.parse(e.newValue)
           const activeTyping = typingData.filter((t: any) => Date.now() - t.timestamp < 5000)
           // Update typing users in state
           activeTyping.forEach((t: any) => {
             if (t.userId !== currentUser?.id) {
-              dispatch(addTypingUser(t))
+              dispatch(addReduxTypingUser(t.userId))
             }
           })
         }
@@ -458,9 +585,20 @@ export function useChatWebSocket() {
       }
     }
 
+    const handleCustomEvent = (e: CustomEvent) => {
+      if (e.detail.timestamp > lastUpdateRef.current) {
+        loadFromStorage()
+      }
+    }
+
     window.addEventListener("storage", handleStorageChange)
-    return () => window.removeEventListener("storage", handleStorageChange)
-  }, [activeChannel, currentUser, dispatch])
+    window.addEventListener("chat-update", handleCustomEvent as EventListener)
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange)
+      window.removeEventListener("chat-update", handleCustomEvent as EventListener)
+    }
+  }, [activeChannel, currentUser, dispatch, loadFromStorage])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -502,6 +640,126 @@ export function useChatWebSocket() {
     }
   }, [currentUser])
 
+  // Initial load
+  useEffect(() => {
+    loadFromStorage()
+  }, [loadFromStorage])
+
+  // Initialize user and start polling
+  useEffect(() => {
+    const user = getCurrentUser()
+    if (user && !currentUser) {
+      const chatUser: ChatUser = {
+        id: user.id,
+        username: user.username,
+        avatar: user.avatar,
+        lastSeen: Date.now(),
+        channel: activeChannel,
+        status: "online",
+      }
+      dispatch(setCurrentUser(chatUser))
+      dispatch(setConnectionStatus("connecting"))
+
+      // Add user to localStorage
+      const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || "[]")
+      const existingUserIndex = users.findIndex((u: ChatUser) => u.id === user.id)
+      if (existingUserIndex >= 0) {
+        users[existingUserIndex] = chatUser
+      } else {
+        users.push(chatUser)
+      }
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users))
+
+      dispatch(setConnectionStatus("connected"))
+    }
+  }, [currentUser, activeChannel, dispatch])
+
+  // Polling for messages and users
+  useEffect(() => {
+    if (!currentUser) return
+
+    const poll = () => {
+      try {
+        // Load messages
+        const storedMessages = JSON.parse(localStorage.getItem(`${STORAGE_KEYS.MESSAGES}-${activeChannel}`) || "[]")
+        dispatch(setMessages(storedMessages))
+
+        // Load and filter users
+        const storedUsers = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || "[]")
+        const activeUsers = storedUsers.filter((user: ChatUser) => {
+          const isActive = Date.now() - user.lastSeen < 30000 // 30 seconds
+          return isActive && user.id !== currentUser.id
+        })
+        dispatch(setUsers(activeUsers))
+
+        // Clean up inactive users
+        const cleanedUsers = storedUsers.filter((user: ChatUser) => {
+          return Date.now() - user.lastSeen < 30000 || user.id === currentUser.id
+        })
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(cleanedUsers))
+      } catch (error) {
+        console.error("Polling error:", error)
+        dispatch(setError("Failed to sync messages"))
+      }
+    }
+
+    // Initial poll
+    poll()
+
+    // Set up polling interval
+    pollIntervalRef.current = setInterval(poll, 2000)
+
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+      }
+    }
+  }, [currentUser, activeChannel, dispatch])
+
+  // Activity tracking
+  useEffect(() => {
+    if (!currentUser) return
+
+    const updateActivity = () => {
+      const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || "[]")
+      const userIndex = users.findIndex((u: ChatUser) => u.id === currentUser.id)
+      if (userIndex >= 0) {
+        users[userIndex].lastSeen = Date.now()
+        users[userIndex].status = "online"
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users))
+      }
+    }
+
+    // Update activity every 10 seconds
+    activityIntervalRef.current = setInterval(updateActivity, 10000)
+
+    return () => {
+      if (activityIntervalRef.current) {
+        clearInterval(activityIntervalRef.current)
+      }
+    }
+  }, [currentUser])
+
+  // Storage event listener for cross-tab sync
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === `${STORAGE_KEYS.MESSAGES}-${activeChannel}`) {
+        const newMessages = JSON.parse(e.newValue || "[]")
+        dispatch(setMessages(newMessages))
+      } else if (e.key === STORAGE_KEYS.USERS) {
+        const newUsers = JSON.parse(e.newValue || "[]")
+        const activeUsers = newUsers.filter((user: ChatUser) => {
+          const isActive = Date.now() - user.lastSeen < 30000
+          return isActive && user.id !== currentUser?.id
+        })
+        dispatch(setUsers(activeUsers))
+      }
+    }
+
+    window.addEventListener("storage", handleStorageChange)
+    return () => window.removeEventListener("storage", handleStorageChange)
+  }, [activeChannel, currentUser, dispatch])
+
   return {
     connected,
     connecting,
@@ -518,6 +776,7 @@ export function useChatWebSocket() {
     sendMessage: sendChatMessage,
     changeChannel,
     handleTyping,
+    getAvatarColor,
   }
 }
 

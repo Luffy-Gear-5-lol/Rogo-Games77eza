@@ -15,4 +15,10 @@ export interface Game {
   slug?: string
   languages?: string[] // Programming languages used in game
   comingSoon?: boolean // Whether the game is coming soon
+  // Manga specific properties
+  genres?: string[]
+  cover?: string
+  rating?: number
+  chapters?: number
+  status?: string
 }

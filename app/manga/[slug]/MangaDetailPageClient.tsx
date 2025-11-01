@@ -1,162 +1,177 @@
 "use client"
 
-import Link from "next/link"
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react"
 import Image from "next/image"
-import { ArrowLeft, BookOpen, Star, Clock, Calendar, ExternalLink } from "lucide-react"
-import { manga } from "@/data/games"
-import { notFound } from "next/navigation"
-import { useParams } from "next/navigation"
+import { useRouter } from "next/navigation"
+import { MangaReadButton } from "@/components/manga-read-button"
+import { ChapterProgressIndicator } from "@/components/chapter-progress-indicator"
+import type { Game } from "@/types/game"
 
-export default function MangaDetailPageClient() {
-  const params = useParams<{ slug: string }>()
-  const mangaItem = manga.find((item) => item.slug === params.slug)
+interface MangaDetailPageClientProps {
+  manga: Game
+}
 
-  if (!mangaItem) {
-    notFound()
-  }
+export default function MangaDetailPageClient({ manga }: MangaDetailPageClientProps) {
+  const router = useRouter()
+  const [currentChapter, setCurrentChapter] = useState(0)
+  const [chapterImages, setChapterImages] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Get reading link based on manga title
-  const getReadingLink = (title: string) => {
-    switch (title.toLowerCase()) {
-      case "one piece":
-        return "https://ww11.readonepiece.com/chapter/one-piece-digital-colored-comics-chapter-001/"
-      case "naruto":
-        return "https://naruto-manga-online.com/"
-      case "bleach":
-        return "https://bleachmanga.biz/"
-      case "attack on titan":
-        return "https://attackontitanmanga.com/"
-      case "death note":
-        return "https://deathnote-manga.com/"
-      case "demon slayer":
-        return "https://demonslayermanga.com/"
-      case "hunter x hunter":
-        return "https://hunterxhuntermanga.com/"
-      default:
-        return "#" // Placeholder for manga without specific links
+  useEffect(() => {
+    if (manga.playUrl) {
+      fetchChapterImages(manga.playUrl)
+    } else {
+      setError("No reading link available for this manga.")
+      setLoading(false)
+    }
+  }, [manga.playUrl])
+
+  const fetchChapterImages = async (url: string) => {
+    setLoading(true)
+    setError(null)
+    try {
+      // In a real application, you would fetch the chapter images from a backend API
+      // For this example, we'll simulate fetching images from a placeholder
+      // This is a simplified example and might not work for all external manga sites
+      const response = await fetch(`/api/proxy?url=${encodeURIComponent(url)}`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const html = await response.text()
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(html, "text/html")
+      const images = Array.from(doc.querySelectorAll('img[src*="cdn"]'))
+        .map((img) => (img as HTMLImageElement).src)
+        .filter((src) => src.includes("chapter") || src.includes("page")) // Basic filtering for chapter images
+
+      if (images.length === 0) {
+        setError(
+          "Could not find any chapter images on the provided link. This might be due to cross-origin restrictions or website structure.",
+        )
+      }
+      setChapterImages(images)
+    } catch (e: any) {
+      setError(
+        `Failed to load chapter images: ${e.message}. This might be due to cross-origin restrictions or website structure.`,
+      )
+      console.error("Failed to load chapter images:", e)
+    } finally {
+      setLoading(false)
     }
   }
 
-  const readingLink = getReadingLink(mangaItem.title)
+  const handleNextChapter = () => {
+    // In a real app, this would navigate to the next chapter's URL
+    // For now, we just show a message
+    alert("Next chapter functionality is not yet implemented for external links.")
+  }
+
+  const handlePrevChapter = () => {
+    // In a real app, this would navigate to the previous chapter's URL
+    // For now, we just show a message
+    alert("Previous chapter functionality is not yet implemented for external links.")
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
-      <div className="container mx-auto px-4 py-8">
-        <Link href="/manga" className="inline-flex items-center mb-8 text-gray-400 hover:text-white">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Manga Collection
-        </Link>
+    <div className="container mx-auto px-4 py-8">
+      <Button onClick={() => router.back()} className="mb-4">
+        <ChevronLeft className="mr-2 h-4 w-4" /> Back to Manga
+      </Button>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Manga Cover */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="text-3xl font-bold">{manga.title}</CardTitle>
+        </CardHeader>
+        <CardContent className="grid md:grid-cols-3 gap-6">
           <div className="md:col-span-1">
-            <div className="relative aspect-[2/3] overflow-hidden rounded-lg border-2 border-gray-700 shadow-xl shadow-purple-500/10">
-              <Image
-                src={mangaItem.cover || mangaItem.image || "/placeholder.svg?height=600&width=400"}
-                alt={mangaItem.title}
-                fill
-                className="object-cover"
-                priority
-              />
+            <Image
+              src={manga.cover || "/placeholder.svg?height=400&width=300&query=manga cover"}
+              alt={manga.title}
+              width={300}
+              height={400}
+              className="w-full h-auto rounded-lg object-cover"
+            />
+            {manga.chapters && (
+              <div className="mt-4">
+                <ChapterProgressIndicator mangaId={manga.id} totalChapters={manga.chapters} />
+              </div>
+            )}
+          </div>
+          <div className="md:col-span-2 space-y-4">
+            <p className="text-lg text-muted-foreground">{manga.description}</p>
+            <Separator />
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <span className="font-semibold">Genres:</span> {manga.genres?.join(", ")}
+              </div>
+              <div>
+                <span className="font-semibold">Chapters:</span> {manga.chapters}
+              </div>
+              <div>
+                <span className="font-semibold">Status:</span> {manga.status}
+              </div>
+              <div>
+                <span className="font-semibold">Rating:</span> {manga.rating} / 5
+              </div>
             </div>
+            <div className="flex gap-2">
+              {manga.playUrl && (
+                <Button asChild>
+                  <a href={manga.playUrl} target="_blank" rel="noopener noreferrer">
+                    Read on External Site <ExternalLink className="ml-2 h-4 w-4" />
+                  </a>
+                </Button>
+              )}
+              <MangaReadButton slug={manga.slug} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-            <div className="mt-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Star className="h-5 w-5 text-yellow-500 mr-1" />
-                  <span className="font-bold">{mangaItem.rating}</span>
-                  <span className="text-gray-400 text-sm ml-1">/ 5.0</span>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">Read Manga</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="text-center py-8">Loading chapter...</div>
+          ) : error ? (
+            <div className="text-center py-8 text-red-500">{error}</div>
+          ) : chapterImages.length > 0 ? (
+            <div className="space-y-4">
+              {chapterImages.map((src, index) => (
+                <div key={index} className="flex justify-center">
+                  <Image
+                    src={src || "/placeholder.svg"}
+                    alt={`Chapter image ${index + 1}`}
+                    width={800}
+                    height={1200}
+                    className="max-w-full h-auto border rounded-lg"
+                    priority={index < 3} // Prioritize loading first few images
+                  />
                 </div>
-                <div className="flex items-center">
-                  <Clock className="h-4 w-4 text-gray-400 mr-1" />
-                  <span className="text-gray-400 text-sm">{mangaItem.chapters} chapters</span>
-                </div>
-              </div>
-
-              <div className="flex items-center">
-                <Calendar className="h-4 w-4 text-gray-400 mr-1" />
-                <span className="text-gray-400 text-sm">Status: {mangaItem.status}</span>
-              </div>
-
-              <div className="pt-4">
-                <button
-                  onClick={() => {
-                    const newWindow = window.open("about:blank", "_blank")
-                    if (newWindow) {
-                      newWindow.document.write(`<script>window.location.href="${readingLink}"</script>`)
-                      newWindow.document.close()
-                    }
-                  }}
-                  className="flex items-center justify-center w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-colors"
-                >
-                  <BookOpen className="mr-2 h-5 w-5" />
-                  Read Manga Online
-                  <ExternalLink className="ml-2 h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Manga Details */}
-          <div className="md:col-span-2">
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">{mangaItem.title}</h1>
-
-            <div className="flex flex-wrap gap-2 mb-6">
-              {mangaItem.genres?.map((genre) => (
-                <span key={genre} className="px-3 py-1 bg-gray-800 text-gray-200 text-sm rounded-full">
-                  {genre}
-                </span>
               ))}
-            </div>
-
-            <div className="prose prose-invert max-w-none">
-              <h2 className="text-xl font-semibold mb-4">Synopsis</h2>
-              <p className="text-gray-300 leading-relaxed mb-6">{mangaItem.description}</p>
-
-              <h2 className="text-xl font-semibold mb-4">About This Manga</h2>
-              <p className="text-gray-300 leading-relaxed">
-                {mangaItem.title} is a popular manga with {mangaItem.chapters} chapters and a rating of{" "}
-                {mangaItem.rating}/5. The manga is currently {mangaItem.status.toLowerCase()}. It features genres such
-                as
-                {mangaItem.genres?.join(", ")}.
-              </p>
-
-              <div className="mt-8 p-4 bg-gray-800 rounded-lg">
-                <h3 className="text-lg font-semibold mb-2">Reading Guide</h3>
-                <p className="text-gray-300">
-                  Click the "Read Manga Online" button to start reading {mangaItem.title} from Chapter 1. The external
-                  site provides high-quality scans and translations.
-                </p>
+              <div className="flex justify-between mt-4">
+                <Button onClick={handlePrevChapter} disabled={currentChapter === 0}>
+                  <ChevronLeft className="mr-2 h-4 w-4" /> Previous Chapter
+                </Button>
+                <Button onClick={handleNextChapter}>
+                  Next Chapter <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Recommended Manga */}
-        <div className="mt-16">
-          <h2 className="text-2xl font-bold mb-6">You Might Also Like</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {manga
-              .filter((item) => item.id !== mangaItem.id)
-              .slice(0, 5)
-              .map((item) => (
-                <Link key={item.id} href={`/manga/${item.slug}`} className="group">
-                  <div className="relative aspect-[2/3] overflow-hidden rounded-lg">
-                    <Image
-                      src={item.cover || item.image || "/placeholder.svg?height=300&width=200"}
-                      alt={item.title}
-                      fill
-                      className="object-cover transition-transform group-hover:scale-105"
-                    />
-                  </div>
-                  <h3 className="mt-2 font-medium text-sm group-hover:text-purple-400 transition-colors">
-                    {item.title}
-                  </h3>
-                </Link>
-              ))}
-          </div>
-        </div>
-      </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              No images found for this chapter. Please try the external link.
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
