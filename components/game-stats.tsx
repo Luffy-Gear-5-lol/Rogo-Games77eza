@@ -22,7 +22,7 @@ export default function GameStats() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-gray-400 text-sm">Games Played</p>
-            <p className="text-3xl font-bold text-purple-400">{totalGamesPlayed}</p>
+            <p className="text-3xl font-bold text-purple-400">{totalGamesPlayed || 0}</p>
           </div>
           <Zap className="h-8 w-8 text-purple-500 opacity-50" />
         </div>
@@ -32,7 +32,7 @@ export default function GameStats() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-gray-400 text-sm">Unique Games</p>
-            <p className="text-3xl font-bold text-blue-400">{uniqueGamesCount}</p>
+            <p className="text-3xl font-bold text-blue-400">{uniqueGamesCount || 0}</p>
           </div>
           <Trophy className="h-8 w-8 text-blue-500 opacity-50" />
         </div>

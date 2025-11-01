@@ -26,7 +26,7 @@ export default function FeaturedGames({ games }: FeaturedGamesProps) {
   useEffect(() => {
     let interval: NodeJS.Timeout
 
-    if (games.length > 0) {
+    if (games && games.length > 0) {
       interval = setInterval(() => {
         if (autoplayRef.current) {
           setActiveIndex((prev) => (prev === games.length - 1 ? 0 : prev + 1))
@@ -39,7 +39,7 @@ export default function FeaturedGames({ games }: FeaturedGamesProps) {
         clearInterval(interval)
       }
     }
-  }, [games.length])
+  }, [games])
 
   // Safety check to ensure we have games
   if (!games || games.length === 0) {
@@ -62,7 +62,6 @@ export default function FeaturedGames({ games }: FeaturedGamesProps) {
 
   return (
     <div className="mb-12 relative">
-      <h2 className="text-2xl font-bold mb-6">Featured Games</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {games.map((game) => {
           const imageSrc = getGameFeaturedImageUrl(game.id, game.image)

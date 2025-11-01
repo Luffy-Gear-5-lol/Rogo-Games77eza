@@ -9,7 +9,7 @@ interface GamePlayRecord {
 
 interface UserGameProgress {
   totalGamesPlayed: number
-  uniqueGames: Set<number>
+  uniqueGames: number[]
   gamesHistory: GamePlayRecord[]
 }
 
@@ -37,7 +37,11 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       totalGamesPlayed: gamesData?.totalGamesPlayed || 0,
-      uniqueGames: gamesData?.uniqueGames ? Array.from(gamesData.uniqueGames) : [],
+      uniqueGames: Array.isArray(gamesData?.uniqueGames)
+        ? gamesData.uniqueGames
+        : gamesData?.uniqueGames
+          ? Array.from(gamesData.uniqueGames as any)
+          : [],
       recentGames: gamesData?.gamesHistory?.slice(0, 10) || [],
     })
   } catch (error) {
@@ -71,12 +75,19 @@ export async function POST(req: NextRequest) {
     // Update user's overall progress
     const userKey = `user:${userId}:games`
     const userData = await kv.get<UserGameProgress>(userKey)
-    const uniqueGames = new Set(userData?.uniqueGames || [])
-    uniqueGames.add(gameId)
+    const uniqueGamesArray = Array.isArray(userData?.uniqueGames)
+      ? userData.uniqueGames
+      : userData?.uniqueGames
+        ? Array.from(userData.uniqueGames as any)
+        : []
+
+    const uniqueGamesSet = new Set(uniqueGamesArray)
+    uniqueGamesSet.add(gameId)
+    const uniqueGamesResult = Array.from(uniqueGamesSet)
 
     const updatedProgress: UserGameProgress = {
       totalGamesPlayed: (userData?.totalGamesPlayed || 0) + 1,
-      uniqueGames,
+      uniqueGames: uniqueGamesResult,
       gamesHistory: [...(userData?.gamesHistory || []), newRecord].slice(-50),
     }
 
@@ -85,7 +96,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       totalPlayed: updatedProgress.totalGamesPlayed,
-      uniqueGamesCount: uniqueGames.size,
+      uniqueGamesCount: uniqueGamesResult.length,
     })
   } catch (error) {
     console.error("Error updating game progress:", error)
