@@ -53,7 +53,7 @@ export default function HomePage() {
                   View All <ChevronRight className="h-4 w-4 ml-1" />
                 </Link>
               </div>
-              <FeaturedGames />
+              <FeaturedGames games={featuredGames} />
             </div>
           </section>
 
