@@ -8,7 +8,6 @@ import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { MangaReadButton } from "@/components/manga-read-button"
-import { ChapterProgressIndicator } from "@/components/chapter-progress-indicator"
 import type { Game } from "@/types/game"
 
 interface MangaDetailPageClientProps {
@@ -96,11 +95,6 @@ export default function MangaDetailPageClient({ manga }: MangaDetailPageClientPr
               height={400}
               className="w-full h-auto rounded-lg object-cover"
             />
-            {manga.chapters && (
-              <div className="mt-4">
-                <ChapterProgressIndicator mangaId={manga.id} totalChapters={manga.chapters} />
-              </div>
-            )}
           </div>
           <div className="md:col-span-2 space-y-4">
             <p className="text-lg text-muted-foreground">{manga.description}</p>
