@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, AlertTriangle, ExternalLink, Maximize, SkipForward, ThumbsUp, ThumbsDown, Eye } from "lucide-react"
+import { ArrowLeft, AlertTriangle, ExternalLink, Maximize, Minimize, ThumbsUp, ThumbsDown, Eye, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { games } from "@/data/games"
 import {
   incrementGameView,
@@ -17,6 +18,7 @@ import GameComplaintForm from "@/components/game-complaint-form"
 import GameAd from "@/components/game-ad"
 import GameCredits from "@/components/game-credits"
 import { getGameCredits } from "@/data/game-credits"
+import { addToRecentlyPlayed } from "@/components/recently-played"
 
 export default function GamePage() {
   const params = useParams()
@@ -28,6 +30,8 @@ export default function GamePage() {
   const [dislikes, setDislikes] = useState(0)
   const [userVote, setUserVote] = useState<"like" | "dislike" | null>(null)
   const [viewCount, setViewCount] = useState(0)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [gameStarted, setGameStarted] = useState(false)
 
   const slug = params?.slug as string
   const game = games.find((g) => g.slug === slug)
@@ -64,22 +68,8 @@ export default function GamePage() {
         }
       }
 
-      // Add to recently played
-      const recent = localStorage.getItem("recentlyPlayed")
-      let recentGames: number[] = recent ? JSON.parse(recent) : []
-
-      // Remove this game if it exists already
-      recentGames = recentGames.filter((id) => id !== game.id)
-
-      // Add to front of array
-      recentGames.unshift(game.id)
-
-      // Keep only last 5
-      if (recentGames.length > 5) {
-        recentGames = recentGames.slice(0, 5)
-      }
-
-      localStorage.setItem("recentlyPlayed", JSON.stringify(recentGames))
+      // Add to recently played (with timestamp for 2-week expiration)
+      addToRecentlyPlayed(game.id)
     }
   }, [game])
 
@@ -194,15 +184,26 @@ export default function GamePage() {
   }
 
   const toggleFullscreen = () => {
-    const gameFrame = document.querySelector("iframe")
-    if (!gameFrame) return
+    const gameContainer = document.getElementById("game-container")
+    if (!gameContainer) return
 
     if (document.fullscreenElement) {
       document.exitFullscreen()
+      setIsFullscreen(false)
     } else {
-      gameFrame.requestFullscreen()
+      gameContainer.requestFullscreen()
+      setIsFullscreen(true)
     }
   }
+  
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+    document.addEventListener("fullscreenchange", handleFullscreenChange)
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange)
+  }, [])
 
   // Format numbers with k for thousands
   const formatNumber = (num: number): string => {
@@ -217,12 +218,12 @@ export default function GamePage() {
 
   if (!game) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex flex-col items-center justify-center p-4">
-        <div className="text-center">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <div className="text-center bg-card border border-border rounded-2xl p-8 max-w-md">
           <AlertTriangle className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-4">Game Not Found</h1>
-          <p className="text-gray-400 mb-8">Sorry, we couldn't find the game you're looking for.</p>
-          <Button onClick={() => router.push("/")} variant="outline">
+          <h1 className="text-2xl font-bold mb-4 text-foreground">Game Not Found</h1>
+          <p className="text-muted-foreground mb-8">Sorry, we couldn't find the game you're looking for.</p>
+          <Button onClick={() => router.push("/")} variant="outline" className="rounded-xl">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
           </Button>
         </div>
@@ -231,38 +232,38 @@ export default function GamePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
+    <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <Button onClick={() => router.push("/")} variant="outline" className="text-sm">
+        <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+          <Button onClick={() => router.push("/")} variant="outline" className="rounded-xl">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Games
           </Button>
           <div className="flex gap-2">
-            <Button onClick={openInNewTab} variant="outline" className="text-sm">
+            <Button onClick={openInNewTab} variant="outline" className="rounded-xl">
               <ExternalLink className="mr-2 h-4 w-4" /> Open in New Tab
             </Button>
-            <Button onClick={() => setShowComplaint(!showComplaint)} variant="ghost" className="text-sm text-red-400">
+            <Button onClick={() => setShowComplaint(!showComplaint)} variant="ghost" className="text-destructive rounded-xl">
               Report Issue
             </Button>
           </div>
         </div>
 
-        <h1 className="text-3xl font-bold mb-2 text-center md:text-left">{game.title}</h1>
+        <h1 className="text-3xl font-bold mb-2 text-center md:text-left text-foreground">{game.title}</h1>
 
         <div className="mb-6">
           <div className="flex flex-wrap gap-2 mb-4 justify-center md:justify-start">
             {game.categories &&
               game.categories.map((category) => (
-                <span key={category} className="bg-gray-800 text-gray-300 px-3 py-1 rounded-full text-sm">
+                <Badge key={category} className="bg-primary/20 text-primary border-0 px-3 py-1">
                   {category}
-                </span>
+                </Badge>
               ))}
           </div>
-          <p className="text-gray-400 text-center md:text-left mb-4">{game.description}</p>
+          <p className="text-muted-foreground text-center md:text-left mb-4">{game.description}</p>
 
           {/* Game Credits integrated into main info section */}
           {credits && (
-            <div className="mb-6 bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+            <div className="mb-6 bg-card rounded-xl p-4 border border-border">
               <GameCredits
                 modCredits={credits.modCredits}
                 originalCredits={credits.originalCredits}
@@ -273,14 +274,14 @@ export default function GamePage() {
           )}
 
           {/* YouTube-style rating system */}
-          <div className="flex items-center justify-center md:justify-start gap-4 mt-4">
-            <div className="flex items-center bg-gray-800/80 rounded-full px-1 py-1">
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-4">
+            <div className="flex items-center bg-muted rounded-full px-1 py-1">
               <button
                 onClick={handleLike}
-                className={`flex items-center px-3 py-1 rounded-l-full transition-colors ${
+                className={`flex items-center px-4 py-2 rounded-l-full transition-all ${
                   userVote === "like"
-                    ? "text-white bg-blue-600 font-bold border border-blue-400"
-                    : "text-gray-400 hover:text-white hover:bg-gray-700"
+                    ? "text-primary-foreground bg-primary font-bold"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
                 }`}
                 aria-label="Like game"
               >
@@ -288,14 +289,14 @@ export default function GamePage() {
                 <span className="text-sm font-medium">{formatNumber(likes)}</span>
               </button>
 
-              <div className="h-5 w-px bg-gray-700 mx-1"></div>
+              <div className="h-5 w-px bg-border mx-1"></div>
 
               <button
                 onClick={handleDislike}
-                className={`flex items-center px-3 py-1 rounded-r-full transition-colors ${
+                className={`flex items-center px-4 py-2 rounded-r-full transition-all ${
                   userVote === "dislike"
-                    ? "text-white bg-blue-600 font-bold border border-blue-400"
-                    : "text-gray-400 hover:text-white hover:bg-gray-700"
+                    ? "text-primary-foreground bg-primary font-bold"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
                 }`}
                 aria-label="Dislike game"
               >
@@ -303,10 +304,10 @@ export default function GamePage() {
                 <span className="text-sm font-medium">{formatNumber(dislikes)}</span>
               </button>
             </div>
-            <div className="bg-gray-800/80 text-white font-medium text-sm px-3 py-1 rounded-full">
-              {likePercentage}%
+            <div className="bg-primary/20 text-primary font-bold text-sm px-4 py-2 rounded-full">
+              {likePercentage}% liked
             </div>
-            <div className="flex items-center text-gray-400">
+            <div className="flex items-center text-muted-foreground">
               <Eye className="h-4 w-4 mr-1" />
               <span className="text-sm">{formatNumber(viewCount)} views</span>
             </div>
@@ -315,14 +316,14 @@ export default function GamePage() {
 
         {/* Game unavailable notification */}
         {!game.isWorking && (
-          <div className="bg-gradient-to-r from-red-900/30 to-red-800/20 border border-red-700/50 rounded-lg p-4 mb-6">
+          <div className="bg-gradient-to-r from-destructive/20 to-orange-500/10 border border-destructive/30 rounded-xl p-4 mb-6">
             <div className="flex items-start">
-              <div className="bg-red-500/20 p-2 rounded-full mr-3">
-                <AlertTriangle className="h-5 w-5 text-red-400" />
+              <div className="bg-destructive/20 p-2 rounded-full mr-3">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
               </div>
               <div>
-                <h3 className="font-bold text-red-400 text-lg">Game Currently Unavailable</h3>
-                <p className="text-gray-300 text-sm mt-1">
+                <h3 className="font-bold text-destructive text-lg">Game Currently Unavailable</h3>
+                <p className="text-muted-foreground text-sm mt-1">
                   This game is currently not working. Our team is working to fix it. Please try another game or check
                   back later.
                 </p>
@@ -332,7 +333,7 @@ export default function GamePage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="text-red-400 border-red-700/50 hover:bg-red-900/30"
+                className="text-destructive border-destructive/50 hover:bg-destructive/10 rounded-xl"
                 onClick={() => router.push("/")}
               >
                 Browse Other Games
@@ -342,63 +343,93 @@ export default function GamePage() {
         )}
 
         {/* Game frame */}
-        <div className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-lg overflow-hidden mb-8 relative shadow-xl shadow-purple-900/10 border border-gray-700">
-          <div className="aspect-video w-full">
-            {isLoading ? (
-              showAd ? (
-                <>
-                  <GameAd onComplete={handleAdComplete} />
-                  <Button
-                    onClick={handleSkipAd}
-                    variant="secondary"
-                    size="sm"
-                    className="absolute bottom-4 left-4 bg-black/70 hover:bg-black/90 text-white"
+        <div 
+          id="game-container"
+          className={`
+            bg-card rounded-2xl overflow-hidden mb-8 relative shadow-xl shadow-primary/10 border border-border
+            ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : ''}
+          `}
+        >
+          <div className={`${isFullscreen ? 'h-full' : 'aspect-video'} w-full`}>
+            {!gameStarted ? (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-pink-500/20">
+                <div className="text-center p-6">
+                  <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6">
+                    <Play className="h-12 w-12 text-primary" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2 text-foreground">{game.title}</h3>
+                  <p className="text-muted-foreground mb-6">Click to start playing</p>
+                  <Button 
+                    onClick={() => {
+                      setGameStarted(true)
+                      setShowAd(true)
+                    }}
+                    size="lg"
+                    className="bg-primary hover:bg-primary/90 rounded-full px-8 font-bold"
                   >
-                    <SkipForward className="h-4 w-4 mr-1" /> Skip Ad
+                    <Play className="h-5 w-5 mr-2 fill-current" /> Play Game
                   </Button>
-                </>
+                </div>
+              </div>
+            ) : isLoading ? (
+              showAd ? (
+                <div className="relative w-full h-full">
+                  <GameAd onComplete={handleAdComplete} />
+                </div>
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-900">
+                <div className="w-full h-full flex items-center justify-center bg-card">
                   <div className="text-center p-6">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mx-auto mb-4"></div>
-                    <h3 className="text-xl font-bold mb-2">Loading Game</h3>
-                    <p className="text-gray-400">Please wait while the game loads...</p>
+                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent mx-auto mb-4"></div>
+                    <h3 className="text-xl font-bold mb-2 text-foreground">Loading Game</h3>
+                    <p className="text-muted-foreground">Please wait while the game loads...</p>
                   </div>
                 </div>
               )
             ) : game.isWorking ? (
               <iframe src={game.playUrl} className="w-full h-full border-0" allowFullScreen title={game.title}></iframe>
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-900">
+              <div className="w-full h-full flex items-center justify-center bg-card">
                 <div className="text-center p-6">
                   <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold mb-2">Game Unavailable</h3>
-                  <p className="text-gray-400 max-w-md">
-                    This game is currently not working. Our team is working to fix it. Please try another game or check
-                    back later.
+                  <h3 className="text-xl font-bold mb-2 text-foreground">Game Unavailable</h3>
+                  <p className="text-muted-foreground max-w-md">
+                    This game is currently not working. Our team is working to fix it.
                   </p>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Game controls at the bottom */}
-          {!isLoading && game.isWorking && (
-            <div className="absolute bottom-0 left-0 right-0 p-2 flex justify-between bg-gradient-to-r from-black/70 to-black/50 backdrop-blur-sm">
-              <Button onClick={handleSkipAd} variant="ghost" size="sm" className="text-white hover:bg-white/10">
-                <SkipForward className="h-4 w-4 mr-1" /> Skip Ad
-              </Button>
+          {/* Game controls - only show when game is loaded */}
+          {gameStarted && !isLoading && game.isWorking && (
+            <div className="absolute bottom-0 left-0 right-0 p-3 flex justify-between items-center bg-gradient-to-t from-black/80 to-transparent">
+              <div className="flex items-center gap-2 text-white text-sm">
+                <Eye className="h-4 w-4" />
+                <span>{formatNumber(viewCount)} views</span>
+              </div>
               <div className="flex gap-2">
-                <Button onClick={toggleFullscreen} variant="ghost" size="sm" className="text-white hover:bg-white/10">
-                  <Maximize className="h-4 w-4 mr-1" /> Fullscreen
+                <Button 
+                  onClick={toggleFullscreen} 
+                  size="sm" 
+                  className="bg-primary hover:bg-primary/90 rounded-full font-medium"
+                >
+                  {isFullscreen ? (
+                    <>
+                      <Minimize className="h-4 w-4 mr-1" /> Exit Fullscreen
+                    </>
+                  ) : (
+                    <>
+                      <Maximize className="h-4 w-4 mr-1" /> Fullscreen
+                    </>
+                  )}
                 </Button>
                 <Button
                   onClick={() => setShowComplaint(true)}
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
-                  className="text-white hover:bg-white/10"
+                  className="rounded-full bg-black/50 border-white/20 text-white hover:bg-black/70"
                 >
-                  <AlertTriangle className="h-4 w-4 mr-1" /> Report Issue
+                  <AlertTriangle className="h-4 w-4 mr-1" /> Report
                 </Button>
               </div>
             </div>
@@ -409,9 +440,9 @@ export default function GamePage() {
           <GameComplaintForm gameId={game.id} gameTitle={game.title} onClose={() => setShowComplaint(false)} />
         )}
 
-        <div className="bg-gray-800 rounded-lg p-6">
-          <h2 className="text-xl font-bold mb-4">How to Play</h2>
-          <p className="text-gray-300">{game.controls}</p>
+        <div className="bg-card border border-border rounded-2xl p-6">
+          <h2 className="text-xl font-bold mb-4 text-foreground">How to Play</h2>
+          <p className="text-muted-foreground">{game.controls}</p>
         </div>
       </div>
     </div>
