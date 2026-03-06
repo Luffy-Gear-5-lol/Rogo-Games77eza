@@ -13,14 +13,18 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Send, Users, Wifi, WifiOff, RefreshCw, AlertTriangle } from "lucide-react"
+import { Send, Users, Wifi, WifiOff, RefreshCw, AlertTriangle, Crown, Shield } from "lucide-react"
 import { filterProfanity, FilterLevel } from "@/utils/profanity-filter"
+import { isAdmin, verifyOwnerCode } from "@/utils/admin-utils"
 
 const CHANNELS = [
   { id: "general", name: "General", description: "General discussion", filterLevel: FilterLevel.PG13 },
   { id: "pg13", name: "PG-13", description: "Mild language allowed", filterLevel: FilterLevel.PG13 },
   { id: "r-rated", name: "R-Rated", description: "All language allowed", filterLevel: FilterLevel.R },
 ]
+
+// Owner username that gets special treatment
+const OWNER_USERNAME = "RogoOwner"
 
 export default function ChatInterface() {
   const dispatch = useDispatch()
@@ -31,8 +35,32 @@ export default function ChatInterface() {
 
   const [messageInput, setMessageInput] = useState("")
   const [isTyping, setIsTyping] = useState(false)
+  const [isOwner, setIsOwner] = useState(false)
+  const [showOwnerCode, setShowOwnerCode] = useState(false)
+  const [ownerCodeInput, setOwnerCodeInput] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout>()
+  
+  // Check owner status on mount
+  useEffect(() => {
+    setIsOwner(isAdmin())
+  }, [])
+  
+  // Handle owner code verification
+  const handleOwnerCodeSubmit = () => {
+    if (verifyOwnerCode(ownerCodeInput)) {
+      setIsOwner(true)
+      setShowOwnerCode(false)
+      setOwnerCodeInput("")
+    } else {
+      setOwnerCodeInput("")
+    }
+  }
+  
+  // Check if a message is from the owner
+  const isOwnerMessage = (username: string) => {
+    return username === OWNER_USERNAME || (isOwner && currentUser?.username === username)
+  }
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -177,17 +205,36 @@ export default function ChatInterface() {
                       <p className="text-sm mt-2">{channel.description}</p>
                     </div>
                   ) : (
-                    messages.map((message) => (
-                      <div key={message.id} className="flex gap-3 hover:bg-muted/20 p-2 rounded-lg transition-colors">
+                    messages.map((message) => {
+                    const messageIsOwner = isOwnerMessage(message.username)
+                    return (
+                      <div 
+                        key={message.id} 
+                        className={`
+                          flex gap-3 p-3 rounded-xl transition-colors
+                          ${messageIsOwner 
+                            ? 'bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-l-4 border-yellow-500' 
+                            : 'hover:bg-muted/20'
+                          }
+                        `}
+                      >
                         <Avatar className="h-8 w-8">
-                          <AvatarFallback className={`${message.avatar} text-white text-sm`}>
-                            {message.username.charAt(0).toUpperCase()}
+                          <AvatarFallback className={`${messageIsOwner ? 'bg-gradient-to-br from-yellow-500 to-orange-500' : message.avatar} text-white text-sm`}>
+                            {messageIsOwner ? <Crown className="h-4 w-4" /> : message.username.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-sm">{message.username}</span>
-                            {message.userId === currentUser?.id && (
+                            <span className={`font-semibold text-sm ${messageIsOwner ? 'text-yellow-500' : ''}`}>
+                              {message.username}
+                            </span>
+                            {messageIsOwner && (
+                              <Badge className="owner-badge text-xs">
+                                <Crown className="h-3 w-3 mr-1" />
+                                Owner
+                              </Badge>
+                            )}
+                            {message.userId === currentUser?.id && !messageIsOwner && (
                               <Badge variant="secondary" className="text-xs">
                                 You
                               </Badge>
@@ -196,10 +243,13 @@ export default function ChatInterface() {
                               {new Date(message.timestamp).toLocaleTimeString()}
                             </span>
                           </div>
-                          <p className="text-sm break-words">{message.content}</p>
+                          <p className={`text-sm break-words ${messageIsOwner ? 'text-foreground font-medium' : ''}`}>
+                            {message.content}
+                          </p>
                         </div>
                       </div>
-                    ))
+                    )
+                  })
                   )}
 
                   {/* Typing Indicators */}
