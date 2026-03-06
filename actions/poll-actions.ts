@@ -69,35 +69,21 @@ const pollQuestions = [
   },
 ]
 
-// Get the next Monday at 6:30 AM for poll expiration
-function getNextMondayAt630AM(): Date {
+// Get the next day at midnight for daily poll expiration
+function getNextDayMidnight(): Date {
   const now = new Date()
-  const dayOfWeek = now.getDay() // 0 = Sunday, 1 = Monday, etc.
-
-  // Calculate days until next Monday
-  const daysUntilNextMonday = dayOfWeek === 1 ? 7 : (8 - dayOfWeek) % 7
-
-  // Create date for next Monday
-  const nextMonday = new Date(now)
-  nextMonday.setDate(now.getDate() + daysUntilNextMonday)
-
-  // Set time to 6:30 AM
-  nextMonday.setHours(6, 30, 0, 0)
-
-  // If the calculated time is in the past (we're on Monday after 6:30 AM),
-  // add 7 days to get to the next Monday
-  if (nextMonday <= now) {
-    nextMonday.setDate(nextMonday.getDate() + 7)
-  }
-
-  return nextMonday
+  const tomorrow = new Date(now)
+  tomorrow.setDate(now.getDate() + 1)
+  tomorrow.setHours(0, 0, 0, 0)
+  return tomorrow
 }
 
-// Get the next Monday at 7:00 AM for new poll creation
-function getNextMondayAt7AM(): Date {
-  const nextMonday = getNextMondayAt630AM()
-  nextMonday.setHours(7, 0, 0, 0)
-  return nextMonday
+// Get poll expiration for current day (end of day)
+function getEndOfDay(): Date {
+  const now = new Date()
+  const endOfDay = new Date(now)
+  endOfDay.setHours(23, 59, 59, 999)
+  return endOfDay
 }
 
 // Initialize the polls file if it doesn't exist
@@ -166,14 +152,10 @@ function createNewPoll(): Poll {
 
     const { question, options } = pollQuestions[randomIndex]
 
-    // Set expiration to next Monday at 6:30 AM
-    const expiresAt = getNextMondayAt630AM()
-
-    // Set creation time to current time, or if a new poll is scheduled,
-    // set it to next Monday at 7:00 AM
+    // Set expiration to end of day (daily polls)
+    const expiresAt = getEndOfDay()
     const now = new Date()
-    const nextMondayAt7AM = getNextMondayAt7AM()
-    const createdAt = now < expiresAt ? now : nextMondayAt7AM
+    const createdAt = now
 
     return {
       id: uuidv4(),
@@ -271,26 +253,26 @@ export async function voteOnPoll(pollId: string, optionId: string): Promise<bool
   }
 }
 
-// Get the next poll change time (for admin display)
+// Get the next poll change time (daily now)
 export async function getNextPollChangeTime(): Promise<{
   currentPollEnds: string
   nextPollStarts: string
 }> {
   try {
-    const nextMondayAt630AM = getNextMondayAt630AM()
-    const nextMondayAt7AM = getNextMondayAt7AM()
+    const endOfDay = getEndOfDay()
+    const nextDay = getNextDayMidnight()
 
     return {
-      currentPollEnds: nextMondayAt630AM.toISOString(),
-      nextPollStarts: nextMondayAt7AM.toISOString(),
+      currentPollEnds: endOfDay.toISOString(),
+      nextPollStarts: nextDay.toISOString(),
     }
   } catch (error) {
     console.error("Error getting next poll change time:", error)
-    const fallbackDate = new Date()
-    fallbackDate.setDate(fallbackDate.getDate() + 7)
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
     return {
-      currentPollEnds: fallbackDate.toISOString(),
-      nextPollStarts: fallbackDate.toISOString(),
+      currentPollEnds: tomorrow.toISOString(),
+      nextPollStarts: tomorrow.toISOString(),
     }
   }
 }

@@ -4,65 +4,73 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 240 10% 96%;
+    --foreground: 240 10% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 240 10% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 240 10% 10%;
 
     --primary: 271 91% 65%;
-    --primary-foreground: 210 40% 98%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 240 5% 90%;
+    --secondary-foreground: 240 10% 10%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 240 5% 90%;
+    --muted-foreground: 240 5% 40%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 271 91% 95%;
+    --accent-foreground: 271 91% 40%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    --border: 240 5% 85%;
+    --input: 240 5% 85%;
     --ring: 271 91% 65%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+    
+    --game-card-bg: 240 10% 98%;
+    --game-title: 240 10% 10%;
+    --section-bg: 271 91% 98%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 240 10% 4%;
+    --foreground: 0 0% 98%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 240 10% 8%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 240 10% 8%;
+    --popover-foreground: 0 0% 98%;
 
     --primary: 271 91% 65%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 240 10% 15%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 240 10% 15%;
+    --muted-foreground: 240 5% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 271 50% 20%;
+    --accent-foreground: 271 91% 80%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
+    --border: 240 10% 20%;
+    --input: 240 10% 20%;
     --ring: 271 91% 65%;
+    
+    --game-card-bg: 240 10% 12%;
+    --game-title: 0 0% 100%;
+    --section-bg: 271 50% 8%;
   }
 }
 
@@ -72,5 +80,81 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  
+  /* Improved text visibility */
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-foreground font-bold;
+  }
+  
+  /* Purple accent through page gaps */
+  .dark main {
+    background: linear-gradient(180deg, hsl(271 50% 8%) 0%, hsl(240 10% 4%) 100%);
+  }
+  
+  /* Light mode gradient */
+  main {
+    background: linear-gradient(180deg, hsl(271 91% 98%) 0%, hsl(240 10% 96%) 100%);
+  }
+}
+
+@layer components {
+  /* Game card styling */
+  .game-card {
+    @apply bg-card rounded-xl overflow-hidden transition-all duration-300;
+    @apply hover:shadow-lg hover:shadow-primary/20 hover:scale-[1.02];
+  }
+  
+  .game-card-title {
+    @apply text-foreground font-bold text-base;
+  }
+  
+  /* Brighter text for game titles in dark mode */
+  .dark .game-card-title {
+    @apply text-white;
+  }
+  
+  /* Play Now button hover overlay */
+  .play-overlay {
+    @apply absolute inset-0 flex items-center justify-center;
+    @apply bg-black/60 opacity-0 transition-opacity duration-300;
+  }
+  
+  .game-card:hover .play-overlay {
+    @apply opacity-100;
+  }
+  
+  /* Category chips */
+  .category-chip {
+    @apply px-4 py-3 rounded-xl font-medium transition-all duration-300;
+    @apply bg-gradient-to-r from-primary/80 to-primary hover:from-primary hover:to-primary/80;
+    @apply text-primary-foreground cursor-pointer;
+  }
+  
+  /* Section headers */
+  .section-header {
+    @apply text-2xl font-bold mb-6 flex items-center gap-2;
+  }
+  
+  .section-header-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-pink-500;
+  }
+  
+  /* Poll results bar */
+  .poll-bar {
+    @apply h-3 rounded-full overflow-hidden bg-muted;
+  }
+  
+  .poll-bar-fill {
+    @apply h-full bg-gradient-to-r from-primary to-pink-500 transition-all duration-500;
+  }
+  
+  /* Owner badge styling */
+  .owner-badge {
+    @apply bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold px-2 py-0.5 rounded-full text-xs;
+  }
+  
+  .owner-message {
+    @apply bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-l-4 border-yellow-500;
   }
 }
