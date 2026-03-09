@@ -15,7 +15,6 @@ import {
   undislikeGame,
 } from "@/actions/game-actions"
 import GameComplaintForm from "@/components/game-complaint-form"
-import GameAd from "@/components/game-ad"
 import GameCredits from "@/components/game-credits"
 import { getGameCredits } from "@/data/game-credits"
 import { addToRecentlyPlayed } from "@/components/recently-played"
@@ -23,9 +22,8 @@ import { addToRecentlyPlayed } from "@/components/recently-played"
 export default function GamePage() {
   const params = useParams()
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [showComplaint, setShowComplaint] = useState(false)
-  const [showAd, setShowAd] = useState(true)
   const [likes, setLikes] = useState(0)
   const [dislikes, setDislikes] = useState(0)
   const [userVote, setUserVote] = useState<"like" | "dislike" | null>(null)
@@ -72,16 +70,6 @@ export default function GamePage() {
       addToRecentlyPlayed(game.id)
     }
   }, [game])
-
-  const handleAdComplete = () => {
-    setShowAd(false)
-    setIsLoading(false)
-  }
-
-  const handleSkipAd = () => {
-    setShowAd(false)
-    setIsLoading(false)
-  }
 
   const handleLike = async () => {
     if (!game) return
@@ -362,7 +350,6 @@ export default function GamePage() {
                   <Button 
                     onClick={() => {
                       setGameStarted(true)
-                      setShowAd(true)
                     }}
                     size="lg"
                     className="bg-primary hover:bg-primary/90 rounded-full px-8 font-bold"

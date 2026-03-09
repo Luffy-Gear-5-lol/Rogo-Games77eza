@@ -13,7 +13,15 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Send, Users, Wifi, WifiOff, RefreshCw, AlertTriangle, Crown, Shield } from "lucide-react"
+import { Send, Users, Wifi, WifiOff, RefreshCw, AlertTriangle, Crown, Shield, Key } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { filterProfanity, FilterLevel } from "@/utils/profanity-filter"
 import { isAdmin, verifyOwnerCode } from "@/utils/admin-utils"
 
@@ -367,6 +375,45 @@ export default function ChatInterface() {
               )}
             </div>
           </ScrollArea>
+          
+          {/* Owner Login Section */}
+          <div className="mt-4 pt-4 border-t">
+            {isOwner ? (
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/50">
+                <Crown className="h-4 w-4 text-yellow-500" />
+                <span className="text-sm font-medium text-yellow-500">Owner Mode Active</span>
+              </div>
+            ) : (
+              <Dialog open={showOwnerCode} onOpenChange={setShowOwnerCode}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full">
+                    <Key className="h-4 w-4 mr-2" />
+                    Owner Login
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Owner Authentication</DialogTitle>
+                    <DialogDescription>
+                      Enter the owner code to access special features.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-4">
+                    <Input
+                      type="password"
+                      placeholder="Enter owner code..."
+                      value={ownerCodeInput}
+                      onChange={(e) => setOwnerCodeInput(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleOwnerCodeSubmit()}
+                    />
+                    <Button onClick={handleOwnerCodeSubmit} className="w-full">
+                      Verify Code
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
         </div>
       </div>
     </div>

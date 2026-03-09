@@ -1,5 +1,5 @@
-// Owner secret code - change this to your own secret
-const OWNER_SECRET_CODE = "rogo-owner-2026"
+// Owner secret code
+const OWNER_SECRET_CODE = "_v01d.cx_nd3r"
 
 // Check if user is the owner (admin) - client-side check
 export function isAdmin(): boolean {
