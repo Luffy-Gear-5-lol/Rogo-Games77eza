@@ -38,6 +38,7 @@
     "@radix-ui/react-toggle-group": "^1.1.1",
     "@radix-ui/react-tooltip": "^1.1.6",
     "@reduxjs/toolkit": "^2.8.2",
+    "@upstash/redis": "1.36.3",
     "@vercel/analytics": "1.6.1",
     "bufferutil": "latest",
     "class-variance-authority": "^0.7.1",
